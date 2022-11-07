@@ -4,8 +4,7 @@ bashics-semaphore() {
     [[ 1 -eq  1 ]]
 }
 
-do-bashics() {
-    # TODO: This is a test function.  You can discard it.
-    bashics.sh
-}
 
+
+# set_bashdebug_mode is a function that's useful for debugging shell commands+script in general:
+[[ -f ~/.local/bin/bashics/set_bashdebug_mode ]] && source ~/.local/bin/bashics/set_bashdebug_mode
