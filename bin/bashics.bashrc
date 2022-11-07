@@ -37,7 +37,7 @@ IGNOREEOF="3"   # Don't close interactive shell for ^D
 
 TERM=xterm-256color
 
-[[ -n ${BASH_VERSION[@]} ]] {
+[[ -n ${BASH_VERSION[@]} ]] && {
     # check the window size after each command and, if necessary,
     # update the values of LINES and COLUMNS.
     shopt -s checkwinsize
@@ -47,7 +47,7 @@ TERM=xterm-256color
     bind Space:magic-space
 
     shopt -s direxpand 2>/dev/null || true
-fi
+}
 
 function reset {
     # The standard reset doesn't restore the cursor, necessarily.
