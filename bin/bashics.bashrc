@@ -4,7 +4,7 @@ bashics-semaphore() {
     [[ 1 -eq  1 ]]
 }
 
-#  DIAGNOSTIC HELPERS
+#  DIAGNOSTIC HELPERS:
 ###########################################################
 
 die() {
@@ -30,7 +30,7 @@ stub() {
 [[ -f ~/.local/bin/bashics/set_bashdebug_mode ]] && source ~/.local/bin/bashics/set_bashdebug_mode
 
 
-##  Fixing Dumb Defauts
+##  Fixing Dumb Defauts:
 ######################################################
 
 IGNOREEOF="3"   # Don't close interactive shell for ^D
@@ -61,8 +61,15 @@ function reset {
 [[ -n $EDITOR ]] || export EDITOR=vi
 
 
+uname -a | grep -E MINGW &>/dev/null && {
+    # On git-bash, it is possible to make symlinks work but
+    # you have to jump through hoops, see:
+    #  https://gist.github.com/Stabledog/594fd0f3c6c23ac9619d33a9f1d94cec
+    export MSYS=winsymlinks:native  # git bash
+}
 
-##  Command improvements
+
+##  Command improvements:
 #######################################################
 
 function initLsStuff {
