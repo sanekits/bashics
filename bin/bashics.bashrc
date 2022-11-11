@@ -44,7 +44,8 @@ TERM=xterm-256color
 
     # Magic space expands !! and !-{n} when you hit spacebar after.  You can also do
     # {cmd-frag}!<space> to expand the last command that started with that frag.
-    bind Space:magic-space
+    # (The conditional ensures that line editing is enabled before we turn on magic-space)
+    [[ :$SHELLOPTS: =~ :(vi|emacs): ]] && bind Space:magic-space
 
     shopt -s direxpand 2>/dev/null || true
 }
