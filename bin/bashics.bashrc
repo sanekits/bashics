@@ -103,7 +103,19 @@ function initLsStuff {
 	fi
 }
 
+define_cdpp_aliases() {
+    alias .p='popd &>/dev/null'
+    alias .-='builtin cd -'
+    alias .1='builtin  cd ..'
+    alias .2='builtin pushd ../.. >/dev/null'
+    alias .3='builtin pushd ../../.. >/dev/null'
+    alias .4='builtin pushd ../../../.. >/dev/null'
+    alias .5='builtin pushd ../../../../.. >/dev/null'
+    alias .6='builtin pushd ../../../../../.. >/dev/null'
+}
+
 
 initLsStuff
+define_cdpp_aliases
 
 [[ 1 -eq 1  ]] # END
