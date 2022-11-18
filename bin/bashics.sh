@@ -18,17 +18,34 @@ canonpath() {
 
 scriptName="$(canonpath "$0")"
 scriptDir=$(command dirname -- "${scriptName}")
+script=$(basename $scriptName)
 
 die() {
     builtin echo "ERROR($(command basename -- ${scriptName})): $*" >&2
     builtin exit 1
 }
 
+do_help() {
+    cat <<-EOF
+$script --help:
+---------------
+$(set_bashdebug_mode) --help
+reset:  clear the terminal
+\$EDITOR: set default to vi if not set already
+\$MSYS: on git-bash/cygwin, enable symlinks
+lsl,ll,la,lra,l,l1,lr,lg,lsg: various ls aliases
+.p .- .1 .2 .3 ...: various dir-change aliases
+tree-walker.sh: walk dir heirarchy, running 'command' if 'condition' met
+EOF
+}
+
+
 stub() {
    builtin echo "  <<< STUB[$*] >>> " >&2
 }
+
 main() {
-    builtin echo "Hello bashics, shellkit edition: args:[$*]"
+    do_help "$@"
 }
 
 [[ -z ${sourceMe} ]] && {

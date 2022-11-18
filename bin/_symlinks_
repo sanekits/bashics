@@ -11,3 +11,4 @@
 #   my-script.sh #help@ ${SHELLKIT_HELP_SYMBOL} --help
 #
 bashics.sh
+tree-walker.sh
