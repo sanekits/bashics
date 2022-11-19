@@ -14,7 +14,7 @@ die() {
 
 do_help() {
     cat <<-EOF
-$script '<condition-test-expression>' '<command-expression>' -d|--max-depth N   -a|--hidden
+$script '<condition-test-expression>' '<command-expression>' -d|--max-depth N   -a|--hidden -q|--quiet
 
    Walk the dir tree from \$CWD.  Evaluate <condition-test-expression>,
    if it succeeds then run <command-expression>.
@@ -37,6 +37,8 @@ EOF
 
 MaxDepth=99999
 IncludeHiddenDirs=false
+Quiet=false
+RootDir="$PWD"
 
 stub() {
     # Print debug output to stderr.  Recommend to call like this:
@@ -67,6 +69,13 @@ do_walk_tree() {
         (
             builtin cd -- "$dd"
             eval "$expr" && {
+                $Quiet || {
+                    builtin printf ">> ${script} expr true (-q to silence this):\n"
+                    builtin printf ">>   root:   %s\n" "$RootDir"
+                    builtin printf ">>   subdir: %s\n" "$dd"
+                    builtin printf ">>   expr: |>%s<|\n" "$expr"
+                    builtin printf ">>   comd: |>%s<|\n" "$comd"
+                } >&2
                 eval "$comd" || die "Command failed [$comd] in $PWD"
             }
             do_walk_tree $nextDepth "$expr" "$comd" || die "die at depth=$nextDepth"
@@ -86,6 +95,8 @@ main() {
                 do_help $*; exit 1 ;;
             -a|--hidden)
                 IncludeHiddenDirs=true;;
+            -q|--quiet)
+                Quiet=true ;;
             -d|--max-depth)
                 MaxDepth=$2; shift ;;
             *)
