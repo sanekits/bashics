@@ -1,12 +1,16 @@
 # vim: filetype=sh :
+function bashdebug_mode_help() {
+    printf  "--on | --off | --tty /dev/pts/??? | --genPS4"
+}
+
 function set_bashdebug_mode {
     # Enables smarter bash tracing (print file/line info with -x output)
     # Options:
-    #   --on:  turn it on 
-    #   --off: turn it off 
+    #   --on:  turn it on
+    #   --off: turn it off
     #   --tty [device]: send output to specified pty (e.g. -tty /dev/pts/112)
     #       (--tty implies --on as well, you don't have to add the latter)
-    #   --gen1:  Generate the PS4 setting for use in other scripts
+    #   --genPS4:  Generate the PS4 setting for use in other scripts
     #
     # Tips:
     #    - Unset PROMPT_COMMAND to reduce noise in interactive use cases
@@ -14,7 +18,7 @@ function set_bashdebug_mode {
     #      commentary can interweave with shell diagnostics
     #
     function print_bad_bxdb {
-        echo -e "\E[1;31mBad or no arg[$1]: use --on | --off | --tty /dev/pts/??? | --gen1\E[0m" >&2
+        echo -e "\E[1;31mBad or no arg[$1]: $(bashdebug_mode_help)\E[0m" >&2
         false
     }
     [[ ${#@} == 0 ]] &&  { print_bad_bxdb $1 ; return; }
@@ -38,13 +42,13 @@ function set_bashdebug_mode {
                shift
                set_bashdebug_mode --on
                ;;
-           --gen1)
+           --genPS4|--gen1)
                echo "PS4='$Ps4_proto'"
                echo "# set -x"
                ;;
 
            *)
-               print_bad_bxdb $1; return; 
+               print_bad_bxdb $1; return;
                ;;
         esac
         shift
@@ -55,11 +59,11 @@ function set_bashdebug_tty() {
     # Run this on the SUT side, after
     # you start bashdebug_tty on the monitor side
     local xtty=$1
-    [[ -e $xtty ]] || { 
+    [[ -e $xtty ]] || {
         echo "ERROR: expecting tty name as \$1" >&2;
         echo " Hint: run bashdebug_tty on the monitor terminal first, then run set_bashdebug_tty [tty] on the SUT terminal."
 
-        false; return; 
+        false; return;
     }
 
     unset PROMPT_COMMAND
@@ -68,8 +72,8 @@ function set_bashdebug_tty() {
 }
 
 function bashdebug_tty() {
-    # Run this on the monitor side 
-    clear; 
+    # Run this on the monitor side
+    clear;
     echo "Run set_bashdebug_tty $(tty) on the SUT side now."
     date; cat >/dev/null
     echo " ::: end: $(date) ::: "
