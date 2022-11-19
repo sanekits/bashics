@@ -20,6 +20,8 @@ scriptName="$(canonpath "$0")"
 scriptDir=$(command dirname -- "${scriptName}")
 script=$(basename $scriptName)
 
+source ${scriptDir}/set_bashdebug_mode
+
 die() {
     builtin echo "ERROR($(command basename -- ${scriptName})): $*" >&2
     builtin exit 1
@@ -29,7 +31,7 @@ do_help() {
     cat <<-EOF
 $script --help:
 ---------------
-$(set_bashdebug_mode) --help
+set_bashdebug_mode: $(bashdebug_mode_help)
 reset:  clear the terminal
 \$EDITOR: set default to vi if not set already
 \$MSYS: on git-bash/cygwin, enable symlinks

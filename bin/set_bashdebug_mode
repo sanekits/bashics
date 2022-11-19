@@ -1,6 +1,6 @@
 # vim: filetype=sh :
 function bashdebug_mode_help() {
-    printf  "--on | --off | --tty /dev/pts/??? | --genPS4"
+    builtin printf  "%s" "--on | --off | --tty /dev/pts/??? | --genPS4"
 }
 
 function set_bashdebug_mode {
