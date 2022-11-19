@@ -14,20 +14,23 @@ die() {
 
 do_help() {
     cat <<-EOF
-$script '<condition-test-expression>' '<command-expression>' -d|--max-depth N
+$script '<condition-test-expression>' '<command-expression>' -d|--max-depth N   -a|--hidden
 
    Walk the dir tree from \$CWD.  Evaluate <condition-test-expression>,
    if it succeeds then run <command-expression>.
 
-   e.g.:
+Examples:
+---------
 
 1: Provide condition and command:
-    $script '[ -f .git ]' 'echo \$PWD; git status'
+    $script '[ -d .git ]' 'echo \$PWD; git status'
 
 2: Launch a shell when condition matches:
-    $script '[ -f .git ]' --shell
-    # When condition matches, an interactive shell is started, and
-    # the prompt includes an indicator tail like 'twalk\$ '
+    $script '[ -f .git ]'
+    # If no command expression is provided, when condition matches an
+    # interactive shell is started. The subshell prompt includes an indicator
+    # tail like 'twalk\$ '
+    # If the subshell exits with a non-zero result, the recursion is aborted.
 
 EOF
 }
