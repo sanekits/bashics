@@ -4,7 +4,7 @@
 
 Download and install the self-extracting setup script:
 
-    https://github.com/sanekits/bashics/releases/latest/downloads/bashics-setup-0.3.5.sh
+    https://github.com/sanekits/bashics/releases/latest/downloads/bashics-setup-0.3.6.sh
 
 Or **if** [shellkit-pm](https://github.com/sanekits/shellkit-pm) is installed:
 
