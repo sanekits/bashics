@@ -38,7 +38,8 @@ EOF
 MaxDepth=99999
 IncludeHiddenDirs=false
 Quiet=false
-RootDir="$PWD"
+RootDir="$(readlink -f .)"
+RootDirEnd=$(( ${#RootDir} + 2 ))
 
 stub() {
     # Print debug output to stderr.  Recommend to call like this:
@@ -68,11 +69,12 @@ do_walk_tree() {
     for dd in "${cands[@]}"; do
         (
             builtin cd -- "$dd"
+            relative_path=$(readlink -f .)
             eval "$expr" && {
                 $Quiet || {
                     builtin printf ">> ${script} expr true (-q to silence this):\n"
                     builtin printf ">>   root:   %s\n" "$RootDir"
-                    builtin printf ">>   subdir: %s\n" "$dd"
+                    builtin printf ">>   subdir: %s\n" "$(readlink -f . | cut -c ${RootDirEnd}-)"
                     builtin printf ">>   expr: |>%s<|\n" "$expr"
                     builtin printf ">>   comd: |>%s<|\n" "$comd"
                 } >&2
