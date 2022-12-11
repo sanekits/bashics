@@ -11,8 +11,25 @@ kit_depends := \
     bin/bashics.bashrc \
     bin/bashics.sh
 
+CompleteAliasRoot=$(ShellkitWorkspace)/complete-alias
+
 .PHONY: publish
 
+.PHONY: prepare-complete-alias
+prepare-complete-alias:
+	[[ -d $(CompleteAliasRoot) ]]  \
+		&& { cd $(CompleteAliasRoot) && git pull ; } \
+	|| {  \
+			cd $(ShellkitWorkspace) \
+				&& git clone https://github.com/sanekits/complete-alias ; \
+		} \
+
+	# Extract the files we care about:
+	for ff in complete_alias completion_loader; do \
+		cp $(CompleteAliasRoot)/$${ff} bin/$${ff}; \
+	done
+
+tree-setup: prepare-complete-alias
 
 publish-common: conformity-check
 

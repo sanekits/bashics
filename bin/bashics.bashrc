@@ -30,6 +30,12 @@ stub() {
 [[ -f ~/.local/bin/bashics/set_bashdebug_mode ]] && source ~/.local/bin/bashics/set_bashdebug_mode
 
 
+# complete_alias is it's own whole thing (https://github.com/sanekits/complete-alias)
+[[ -f ~/.local/bin/bashics/completion_loader ]] && {
+    source ~/.local/bin/bashics/completion_loader
+}
+
+
 ##  Fixing Dumb Defauts:
 ######################################################
 

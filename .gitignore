@@ -1,3 +1,5 @@
 shellkit
 tmp
 .vscode
+bin/complete_alias
+bin/completion_loader
