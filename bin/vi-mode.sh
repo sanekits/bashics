@@ -27,7 +27,11 @@ stub() {
 set_vi_mode() {
     local mode=$1
     ln -sf ${scriptDir}/inputrc-vi-$mode ${HOME}/.inputrc
-    echo "vi mode is now $mode"
+    echo "vi mode is now $mode, restart shell."
+}
+
+do_help() {
+    echo "$(basename $scriptName) on|off"
 }
 
 main() {
@@ -35,10 +39,10 @@ main() {
         case $1 in
             on) set_vi_mode on ; return ;;
             off) set_vi_mode off ; return ;;
-            *) echo "$(basename $scriptName) on|off" ;;
         esac
         shift
     done
+    do_help
 }
 
 [[ -z ${sourceMe} ]] && {

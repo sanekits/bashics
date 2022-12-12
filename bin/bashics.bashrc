@@ -35,6 +35,14 @@ stub() {
     source ~/.local/bin/bashics/completion_loader
 }
 
+# vi-mode.sh has an 'on' option which sets up a symlink to enable
+# vi command line editing
+[[ -f ~/.inputrc ]] && {
+    [[ $(readlink -f ~/.inputrc 2>/dev/null) == *inputrc-vi-on ]] && {
+        set -o vi
+    }
+}
+
 
 ##  Fixing Dumb Defauts:
 ######################################################
