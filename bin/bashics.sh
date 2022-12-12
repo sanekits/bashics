@@ -38,6 +38,7 @@ reset:  clear the terminal
 lsl,ll,la,lra,l,l1,lr,lg,lsg: various ls aliases
 .p .- .1 .2 .3 ...: various dir-change aliases
 tree-walker.sh: walk dir heirarchy, running 'command' if 'condition' met
+vi-mode.sh:  on|off -- change command line edit mode
 EOF
 }
 
