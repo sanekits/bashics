@@ -2,7 +2,7 @@
 
 # Running bashics-version.sh is the correct way to
 # get the home install path for the tool
-KitVersion=0.3.8
+KitVersion=0.3.9
 
 canonpath() {
     builtin type -t realpath.sh &>/dev/null && {
