@@ -98,6 +98,7 @@ function initLsStuff {
     }
 
     alias lsl=ls_less
+    alias ls='command ls --color=auto'
     alias ll='ls -alF'
     alias la='ls -A'
     alias lra='ls -lrta'
