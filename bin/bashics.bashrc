@@ -108,6 +108,7 @@ function initLsStuff {
     alias lg='builtin set -f; ls_grep'
     alias lsg='builtin set -f; ls_grep'
 
+	[[ -n $MACOSX ]] || MACOSX=false
 	if $MACOSX; then   # Mac doesn't have dircolors
 		CLICOLOR=YES
 		alias ls='ls -G'
