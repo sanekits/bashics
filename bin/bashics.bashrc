@@ -135,6 +135,6 @@ initLsStuff
 define_cdpp_aliases
 
 # We don't like people aliasing `rm` to be "helpful":
-unalias rm
+unalias rm &>/dev/null
 
 [[ 1 -eq 1  ]] # END
