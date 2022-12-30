@@ -67,6 +67,7 @@ do_walk_tree() {
     cands=( $(ls -${hiddenOpt}F | grep '/' | grep -vE '(\./|\.\./)' | tr -d '/' ) )
     local nextDepth=$(( ++depth ))
     for dd in "${cands[@]}"; do
+        [[ -d "$dd" ]] || continue
         (
             builtin cd -- "$dd"
             relative_path=$(readlink -f .)
