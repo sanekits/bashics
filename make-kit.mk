@@ -13,7 +13,7 @@ kit_depends := \
 
 CompleteAliasRoot=$(ShellkitWorkspace)/complete-alias
 
-.PHONY: publish
+.PHONY: publish publish-draft
 
 .PHONY: prepare-complete-alias
 prepare-complete-alias:
@@ -33,10 +33,10 @@ tree-setup: prepare-complete-alias
 
 publish-common: conformity-check
 
-publish: pre-publish publish-common release-draft-upload release-list
-
-
-	@echo ">>>> publish complete OK.  <<<"
-	@echo ">>>> Manually publish the release from this URL when satisfied, <<<<"
-	@echo ">>>> and then change ./version to avoid accidental confusion. <<<<"
+publish: pre-publish publish-common release-upload release-list
 	cat tmp/draft-url
+	@echo ">>>> publish complete OK. (FINAL)  <<<"
+
+publish-draft: pre-publish publish-common release-draft-upload release-list
+	cat tmp/draft-url
+	@echo ">>>> publish complete OK. (DRAFT - you must manually publish it from github release page)  <<<"
