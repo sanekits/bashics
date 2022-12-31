@@ -12,6 +12,14 @@ die() {
     exit 1
 }
 
+set_ps4_color() {
+    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+}
+
+set_ps4_plain() {
+    PS4='+$?(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+}
+
 stub() {
     # Print debug output to stderr.  Recommended call snippet:
     #   stub "${FUNCNAME[0]}.${LINENO}" "$@" "<Put your message here>"
@@ -27,7 +35,8 @@ stub() {
 }
 
 # set_bashdebug_mode is a function that's useful for debugging shell commands+script in general:
-[[ -f ~/.local/bin/bashics/set_bashdebug_mode ]] && source ~/.local/bin/bashics/set_bashdebug_mode
+[[ -f ~/.local/bin/bashics/set_bashdebug_mode ]] \
+    && source ~/.local/bin/bashics/set_bashdebug_mode
 
 
 # complete_alias is it's own whole thing (https://github.com/sanekits/complete-alias)
@@ -73,7 +82,8 @@ function reset {
 # disable flow control for terminal:
 /bin/stty -ixon -ixoff 2>/dev/null
 
-[[ -n $EDITOR ]] || export EDITOR=vi
+[[ -n $EDITOR ]] \
+    || export EDITOR=vi
 
 
 uname -a | grep -E MINGW &>/dev/null && {
@@ -103,7 +113,6 @@ function initLsStuff {
     alias la='ls -A'
     alias lra='ls -lrta'
     alias l='ls -CF'
-    alias l1='ls -1'
     alias lr='ls -lrt'
     alias lg='builtin set -f; ls_grep'
     alias lsg='builtin set -f; ls_grep'
