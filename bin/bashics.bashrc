@@ -60,6 +60,8 @@ IGNOREEOF="3"   # Don't close interactive shell for ^D
 
 TERM=xterm-256color
 
+set +o noclobber  # We don't need Mom telling us about overwriting files
+
 [[ -n ${BASH_VERSION[@]} ]] && {
     # check the window size after each command and, if necessary,
     # update the values of LINES and COLUMNS.
