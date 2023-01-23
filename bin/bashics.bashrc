@@ -145,6 +145,12 @@ define_cdpp_aliases() {
 initLsStuff
 define_cdpp_aliases
 
+function find-up-tree() {
+    find-up-tree.sh "$@"
+}
+
+alias fut='find-up-tree.sh'
+
 # We don't like people aliasing `rm` to be "helpful":
 unalias rm &>/dev/null
 
