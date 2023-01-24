@@ -22,6 +22,10 @@ ${script} name [name...]  [--pid <pid>] [--context <context>] [--dir <dir>]
 
 See also: await-no-locks.sh
 
+NOTE: If you use this in a loop which launches background subshells, it's
+  important to add a "sleep 0.001" after each launch to let the previous
+  process start before creating more lockfiles.
+
 XEOF
 }
 

@@ -5,6 +5,7 @@ scriptName="$(readlink -f "$0")"
 scriptDir=$(command dirname -- "${scriptName}")
 
 LockAdd=$(readlink -f ${scriptDir}/../bin/lock-add.sh)
+AwaitNoLocks=$(readlink -f ${scriptDir}/../bin/await-no-locks.sh)
 
 die() {
     builtin echo "ERROR($(basename ${scriptName})): $*" >&2
@@ -25,16 +26,27 @@ stub() {
 }
 
 test_add_bulk() {
+    local pre_clean=true
+    [[ $1 == --no-clean ]] \
+        && pre_clean=false
     local lockdir=locks.test_add_bulk
-    rm -rf $lockdir 2>/dev/null || :
-    mkdir $lockdir
+    $pre_clean && {
+        rm -rf $lockdir 2>/dev/null || :
+    }
+    mkdir -p $lockdir
     for vn in {000..199}; do
         mkdir -p ${lockdir}/user-${vn}.d
     done
     for vn in {000..199}; do
-        ${LockAdd} --dir ${lockdir} --pid 1${vn} --context "this is it ${vn}" --block user-${vn}
-        [[ -f ${lockdir}/user-${vn}.lock ]] || die "Lock creation fail at ${vn}"
+        (
+            ${LockAdd} --dir ${lockdir} --pid 1${vn} --context "this is it ${vn}" --block user-${vn} || die 101
+            [[ -f ${lockdir}/user-${vn}.lock ]] || die "Lock creation fail at ${vn}"
+            sleep 2
+        ) || echo "failed at user-$vn" &
+        sleep 0.001
     done
+
+    wait
 
     mkdir -p eval.test_add_bulk
     cd $lockdir && {
@@ -42,8 +54,16 @@ test_add_bulk() {
         find -type d | sort >> ../eval.test_add_bulk/all-content.txt
     }
     cd ../eval.test_add_bulk && {
-        diff all-content.txt all-content-ref.txt || die "Failed comparing all-content.txt and all-content-ref.txt in $PWD"
+        diff all-content.txt all-content-ref.txt &>/dev/null || die "Failed comparing all-content.txt and all-content-ref.txt in $PWD"
     }
+    cd ..
+
+    echo "...cleanup:"
+    ${AwaitNoLocks} --dir $lockdir user-{000..199} &
+    rm ${lockdir}/*.lock
+
+    wait
+
     echo "test_add_bulk(): OK"
 }
 
