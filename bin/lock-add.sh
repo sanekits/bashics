@@ -41,19 +41,17 @@ stub() {
 
 remove_name() {
     local remove_name name_list regex
-    set -x
     remove_name=$1; shift;
     name_list="$@"
     [[ -n $remove_name  ]] || {
-        set +x; echo ; return;
+        echo ; return;
     }
     [[ ${#name_list[@]} -eq 0 ]] && {
-        set +x; echo ; return;
+        echo ; return;
     }
     regex="^(.*)\b${remove_name}\b(.*)\$"
     [[ "${name_list[@]}" =~ $regex ]]
     echo "${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
-    set +x
 }
 
 [[ -z ${sourceMe} ]] && {
