@@ -98,7 +98,7 @@ remove_name() {
             # Lock can be acquired for this lock_name (note: lock acquisition is not strictly serialized here,
             # we just abort if a different pid beats us to the punch:)
             mv "${lock_name}.pend${lock_pid}.lock" "${lock_name}.lock"
-            grep -Eq "^pid=${lock_pid}\$" ${lock_name}.lock || die "Lock acquisition contention failed: $lock_pid vs $(cat ${lock_name}.lock)"
+            grep -Eq "^pid=${lock_pid}\$" "${lock_name}.lock" || die "Lock acquisition contention failed: $lock_pid vs [" $(cat ${lock_name}.lock | tr '\n' ' ' ) "]"
             lock_names=( $( remove_name ${lock_name} ${lock_names[@]} ) )
             stub "${FUNCNAME[0]}.${LINENO}" "$dx_inner.$dx_outer" "P__shift" lock_names= "${lock_names[@]}"
         done
