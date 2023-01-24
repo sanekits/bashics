@@ -29,9 +29,11 @@ test_add_bulk() {
     rm -rf $lockdir 2>/dev/null || :
     mkdir $lockdir
     for vn in {000..199}; do
+        mkdir -p ${lockdir}/user-${vn}.d
+    done
+    for vn in {000..199}; do
         ${LockAdd} --dir ${lockdir} --pid 1${vn} --context "this is it ${vn}" --block user-${vn}
         [[ -f ${lockdir}/user-${vn}.lock ]] || die "Lock creation fail at ${vn}"
-        mkdir -p ${lockdir}/user-${vn}.d
     done
 
     mkdir -p eval.test_add_bulk
