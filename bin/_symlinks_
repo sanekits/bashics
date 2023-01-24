@@ -14,3 +14,4 @@ bashics.sh
 tree-walker.sh
 vi-mode.sh
 find-up-tree.sh  # Search up the tree for a name, output like ../../thing-i-found.txt
+await-no-locks.sh
