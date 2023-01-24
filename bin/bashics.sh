@@ -41,6 +41,7 @@ tree-walker.sh: walk dir heirarchy, running 'command' if 'condition' met
 find-up-tree.sh: locate file/dir by traversing the parentage of PWD
 vi-mode.sh:  on|off -- change command line edit mode
 await-no-locks.sh: block until there's no matching .lock files in given --dir
+lock-add.sh: Add a resource lockfile to --dir
 EOF
 }
 
