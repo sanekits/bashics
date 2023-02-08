@@ -35,8 +35,8 @@ find_up() {
         exit 0
     }
     (
-        cd ..
         [[ "$PWD" == "/" ]] && exit 1
+        cd ..
         res=$(find_up "$1")
         [[ -n $res ]] && {
             echo -n ../${res};
@@ -67,7 +67,12 @@ main() {
     while true; do
         echo -n "$prefix"; find_up "${searchName}"
         exit
+
+
+
+
         # TODO:  find and fix the recursion problems of find-all
+        #  ------------------ DISABLED CODE BELOW --------------
         res=$?
         [[ $res -eq 0 ]] \
             && (( ++foundCount ))
