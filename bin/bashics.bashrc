@@ -4,6 +4,20 @@ bashics-semaphore() {
     [[ 1 -eq  1 ]]
 }
 
+# Adding to the PATH, distinct.  Use $2=after to append instead of prefix:
+__pathmunge__ () {
+    case ":${PATH}:" in
+        *:"$1":*)
+            ;;
+        *)
+            if [ "$2" = "after" ] ; then
+                PATH=$PATH:$1
+            else
+                PATH=$1:$PATH
+            fi
+    esac
+}
+
 #  DIAGNOSTIC HELPERS:
 ###########################################################
 
