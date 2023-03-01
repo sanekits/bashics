@@ -155,6 +155,11 @@ define_cdpp_aliases() {
     alias .6='builtin pushd ../../../../../.. >/dev/null'
 }
 
+function less_syntax_hilite() {
+    #Help invoke less using Python pygments as syntax-coloring provider (pip install pygments first)
+    less-syntax-hilite.sh "$@"
+}
+
 
 initLsStuff
 define_cdpp_aliases

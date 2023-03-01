@@ -42,6 +42,7 @@ find-up-tree.sh: locate file/dir by traversing the parentage of PWD
 vi-mode.sh:  on|off -- change command line edit mode
 await-no-locks.sh: block until there's no matching .lock files in given --dir
 lock-add.sh: Add a resource lockfile to --dir
+less_syntax_hilite: View files with less, but with syntax highlighting
 __pathmunge__: Add a dir to the PATH without duplication
 EOF
 }
