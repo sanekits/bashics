@@ -19,7 +19,6 @@ die() {
     which pygmentize || {
         die "Command 'pygmentize' not found on the PATH.  Try \"$(get_py_version) -m pip install pygments\" to resolve the dependency."
     }
-    set -x
     Less=$(which less)
     Pygmentize=$(which pygmentize)
     export LESS=" -R"
