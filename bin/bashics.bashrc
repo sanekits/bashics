@@ -170,6 +170,17 @@ function find-up-tree() {
 
 alias fut='find-up-tree.sh'
 
+function printv() {
+    # Partner to `mapfile -t < <(some command)", which
+    # creates an array variable from a text stream.  printv turns
+    # array variable(s) back into text streams:
+    local vv xpr prf
+    for vv in "$@"; do
+        xpr="\${${vv}[@]}"
+        eval 'printf "%s\n" ' "\"$xpr\""
+    done
+}
+
 # We don't like people aliasing `rm` to be "helpful":
 unalias rm &>/dev/null
 
