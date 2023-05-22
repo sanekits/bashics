@@ -174,13 +174,13 @@ function printv() {
     # Partner to `mapfile -t < <(some command)", which
     # creates an array variable from a text stream.  printv turns
     # array variable(s) back into text streams:
-    local vv xpr prf
-    for vv in "$@"; do
-        [[ $( eval declare -p "$vv" ) =~ ^declare\ -a ]] && {
-            xpr="\${${vv}[@]}"
-            eval 'printf "%s\n" ' "\"$xpr\""
+    local __vv __xpr
+    for __vv in "$@"; do
+        [[ $( eval declare -p "$__vv" ) =~ ^declare\ -a ]] && {
+            __xpr="\${${__vv}[@]}"
+            eval 'printf "%s\n" ' "\"$__xpr\""
         } || {
-            eval echo "\$${vv}"
+            eval echo "\$${__vv}"
         }
     done
 }
