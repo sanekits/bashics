@@ -176,8 +176,12 @@ function printv() {
     # array variable(s) back into text streams:
     local vv xpr prf
     for vv in "$@"; do
-        xpr="\${${vv}[@]}"
-        eval 'printf "%s\n" ' "\"$xpr\""
+        [[ $( eval declare -p "$vv" ) =~ ^declare\ -a ]] && {
+            xpr="\${${vv}[@]}"
+            eval 'printf "%s\n" ' "\"$xpr\""
+        } || {
+            eval echo "\$${vv}"
+        }
     done
 }
 
