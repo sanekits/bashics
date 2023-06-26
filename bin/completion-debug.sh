@@ -3,6 +3,7 @@
 
 scriptName="$(readlink -f "$0")"
 scriptDir=$(command dirname -- "${scriptName}")
+script=$(basename "$scriptName")
 
 PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
@@ -13,40 +14,56 @@ die() {
 
 advise_missing_bash_completion() {
     cat <<-XEOF
+    Problem:
+    --------
     The bash-completion package does not seem to be installed.  You might be able
     to solve this with:
 
-      sudo apt-get update -y && apt-get install bash-completion
+      sudo apt-get update -y && sudo apt-get install bash-completion
 
     This package provides essential basic functionality for autocompletion in bash.
+
+    Restart $script after this package has been installed.
 
 XEOF
 }
 
 advise_missing_bashics_semaphore() {
     cat <<-XEOF
+    Problem:
+    --------
     The function "bashics-semaphore()" was not found in your shell environment.  This
     is normally initialized when ~/.local/bin/bashics/bashics.bashrc is sourced during
     shell startup.  You should trace the logic of your ~/.bashrc.
+
+    Restart $script after this problem is resolved.
 XEOF
 }
 
 advise_missing_make() {
     cat <<-XEOF
+    Problem:
+    --------
     The 'make' program was not found on your PATH.  This is a basic Unix tool which is
     bundled with most distributions by default.   There may be something missing from
     your PATH, or perhaps you need to add make to your installation, e.g. this might
     work:
 
-       sudo apt-get install make
+        sudo apt-get update -y && sudo apt-get install make
+
+    Restart $script after this package has been installed.
 
 XEOF
 }
 
 advise_missing_make_completion_spec() {
     cat <<-XEOF
+    Problem:
+    --------
     A probe with 'complete -p make' failed.  This means that autocompletion for
     'make' is not working.
+
+    Restart $script after this problem is resolved.
 XEOF
 }
 
