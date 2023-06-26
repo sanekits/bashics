@@ -12,6 +12,18 @@ die() {
     builtin exit 1
 }
 
+am_i_root() {
+    [[ $(id -u) == 0 ]] && { return; }
+    groups 2>/dev/null | grep root &>/dev/null && {
+        return;
+    }
+}
+
+Sudo() {
+    am_i_root && return
+    echo "sudo "
+}
+
 advise_missing_bash_completion() {
     cat <<-XEOF
     Problem:
@@ -19,7 +31,7 @@ advise_missing_bash_completion() {
     The bash-completion package does not seem to be installed.  You might be able
     to solve this with:
 
-      sudo apt-get update -y && sudo apt-get install bash-completion
+      $(Sudo)apt-get update -y && $(Sudo)apt-get install bash-completion
 
     This package provides essential basic functionality for autocompletion in bash.
 
@@ -49,7 +61,7 @@ advise_missing_make() {
     your PATH, or perhaps you need to add make to your installation, e.g. this might
     work:
 
-        sudo apt-get update -y && sudo apt-get install make
+        $(Sudo)apt-get update -y && $(Sudo)sudo apt-get install make
 
     Restart $script after this package has been installed.
 
