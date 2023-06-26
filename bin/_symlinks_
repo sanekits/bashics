@@ -11,6 +11,7 @@
 #   my-script.sh #help@ ${SHELLKIT_HELP_SYMBOL} --help
 #
 bashics.sh
+completion-debug.sh # Run diagnostics on shell completion+make setup
 tree-walker.sh
 vi-mode.sh
 find-up-tree.sh  # Search up the tree for a name, output like ../../thing-i-found.txt
