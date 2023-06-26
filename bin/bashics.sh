@@ -33,6 +33,7 @@ $script --help:
 ---------------
 set_bashdebug_mode: $(bashdebug_mode_help)
 reset:  clear the terminal
+completion-debug.sh: diagnose and advise if bash autocompletion is substandard
 \$EDITOR: set default to vi if not set already
 \$MSYS: on git-bash/cygwin, enable symlinks
 lsl,ll,la,lra,l,l1,lr,lg,lsg: various ls aliases
