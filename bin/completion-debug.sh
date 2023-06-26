@@ -43,6 +43,13 @@ advise_missing_make() {
 XEOF
 }
 
+advise_missing_make_completion_spec() {
+    cat <<-XEOF
+    A probe with 'complete -p make' failed.  This means that autocompletion for
+    'make' is not working.
+XEOF
+}
+
 check_bash_completion_dpkg() {
     which dpkg &>/dev/null || die "Can't find dpkg command on the PATH"
     dpkg -s bash-completion &>/dev/null || {
@@ -68,6 +75,12 @@ check_make() {
         false
         return
     }
+    bash -ic 'complete -p make &>/dev/null' || {
+        advise_missing_make_completion_spec
+        false
+        return
+    }
+
     echo "make checked: Ok"
 }
 
@@ -76,6 +89,7 @@ check_make() {
     check_bash_completion_dpkg || exit 19
     check_bashics_init || exit 21
     check_make || exit 23
+    echo "Bash completion setup checks completed: Ok"
     builtin exit
 }
 command true
