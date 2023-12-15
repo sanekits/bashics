@@ -18,12 +18,16 @@ CompleteAliasRoot=$(ShellkitWorkspace)/complete-alias
 
 .PHONY: prepare-complete-alias
 prepare-complete-alias:
-	[[ -d $(CompleteAliasRoot) ]]  \
-		&& { cd $(CompleteAliasRoot) && git pull ; } \
-	|| {  \
-			cd $(ShellkitWorkspace) \
-				&& git clone https://github.com/sanekits/complete-alias ; \
-		} \
+	[[ -d $(CompleteAliasRoot) ]] && {
+		(
+			cd $(CompleteAliasRoot) && git pull
+		)
+	} || {
+		(
+			cd $(ShellkitWorkspace)  \
+				&& git clone https://github.com/sanekits/complete-alias ;
+		)
+	}
 
 	# Extract the files we care about:
 	for ff in complete_alias completion_loader; do \
