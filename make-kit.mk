@@ -1,4 +1,5 @@
 # make-kit.mk for bashics
+make-kit.mk: ;
 #  This makefile is included by the root shellkit Makefile
 #  It defines values that are kit-specific.
 #  You should edit it and keep it source-controlled.
@@ -30,6 +31,7 @@ prepare-complete-alias:
 	done
 
 tree-setup: prepare-complete-alias
+
 
 publish-common: conformity-check
 
