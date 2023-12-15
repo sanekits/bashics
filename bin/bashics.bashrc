@@ -169,6 +169,7 @@ function find-up-tree() {
 }
 
 alias fut='find-up-tree.sh'
+alias eb='exec bash -l'
 
 function printv() {
     # Partner to `mapfile -t < <(some command)", which
