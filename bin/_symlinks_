@@ -18,3 +18,4 @@ find-up-tree.sh  # Search up the tree for a name, output like ../../thing-i-foun
 await-no-locks.sh
 lock-add.sh
 less-syntax-hilite.sh
+quash.sh  # Debug wrapper for shell scripts
