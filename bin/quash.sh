@@ -16,17 +16,26 @@ die() {
     builtin exit 1
 }
 
-usageDie() {
+usage() {
     cat <<-EOF
-Quash 0.4 -- shell script trace wrapper.
+Quash 0.5.0 -- shell script trace wrapper.
 
-Usage: quash.sh --tty|-t /path/to/tty [--] <script-name> [script args]
-    --tty|-t /path/to-tty:  Send trace output to this terminal
+Usage:
+    quash.sh <--tty|-t /path/to/tty> <-p [N]> [--] <script-name> [script args]
+
+Options:
+    --tty|-t /path/to-tty:  Send trace output to this terminal/pipe/file
+    -p:  Output pty short form (e.g. '-p 1' => '--tty /dev/pts/1')
     --:  End of quash arguments (remaining args are passed to <script-name>)
 
-  When executed without --tty, we print the tty paths to all found terminals.
+  When executed without --tty or -p, we print the tty paths to all found terminals.
 EOF
-    echo -n '  ' ; die "$@"
+}
+
+usageDie() {
+    usage
+    echo
+    die "$@"
 }
 
 FindTraceTtyCandidates() {
@@ -47,22 +56,23 @@ BroadcastTtyIdentifiers() {
 }
 
 LaunchDebugee() {
+    echo
     {
         echo
-        echo
-        echo -e " -- $scriptName is launching \033[;31m$1\033[;0m:"
-        echo "   Start: $(date -Iseconds)"
-        echo "   PWD: $PWD"
-        echo "   Trace output: $TRACE_PTY"
+        echo -e "   Quash is launching: \033[;31m$1\033[;0m"
+        echo -e "   Start: \033[;31m$(date -Iseconds)\033[;0m"
+        echo -e "   PWD: \033[;31m${PWD}\033[;0m"
+        echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
         echo -e "   Command line: [\033[;31m" "$@" "\033[;0m]"
+        echo
     } | sed 's,^, ✨ ✨ ✨,' > ${TRACE_PTY}
 
-    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}() ${#FUNCNAME[@]}: }'
     export PS4
     exec 9> ${TRACE_PTY}
     BASH_XTRACEFD=9
     export BASH_XTRACEFD
-    exec /bin/bash -x "$@"
+    exec bash -x "$@"
 }
 
 
@@ -70,10 +80,18 @@ LaunchDebugee() {
     FWD_ARGS=()
     while [[ -n "$1" ]]; do
         case "$1" in
-            --tty|-t) shift;
-                      TRACE_PTY="$1"
-                      [[ -e "${TRACE_PTY}" ]] || die "--tty $1 -- device not found"
-                      ;;
+            --tty|-t)   shift;
+                        TRACE_PTY="$1"
+                        [[ -e "${TRACE_PTY}" ]] || {
+                            touch "${TRACE_PTY}" || {  # The arg might be a file to be created?
+                                die "--tty $1 -- device not found"
+                            }
+                        }
+                        ;;
+            -p)         shift;
+                        TRACE_PTY="/dev/pts/$1"
+                        [[ -e "${TRACE_PTY}" ]] || die "-p $1 -- device /dev/pts/$1 not found"
+                        ;;
             --) shift; break ;;
             *) FWD_ARGS+=("$1") ;;
         esac
@@ -85,15 +103,18 @@ LaunchDebugee() {
 
         BroadcastTtyIdentifiers
         if [[ ${#TRACE_CANDIDATE_TTYS[@]} -eq 0 ]]; then
-            echo "Can't find any other terminal(s) for trace output.  Open an additional bash shell in its own terminal."
+            echo "Can't find any other terminal(s) for trace output.  Open an "
+            echo "   additional bash shell in its own terminal."
         else
             echo "I found these terminals for trace output: "
             printf "    %s\n" "${TRACE_CANDIDATE_TTYS[@]}"
-            echo "Please add \"--tty [path]\" before the name of your script to select the trace output terminal, e.g.:"
+            echo "Please add \"-t [path]\" or \"-p [N]\" before the name of your script to "
+            echo "select the trace output terminal, e.g.:"
+            echo
             [[ ${#FWD_ARGS[@]} -eq 0 ]] && {
-                echo "   quash.sh --tty /dev/pts/NN <script-name> [args]"
+                echo "   quash.sh --tty /dev/pts/1 ./my-script.sh --foo "
             } || {
-                echo "   quash.sh --tty /dev/pts/NN ${FWD_ARGS[@]}"
+                echo "   quash.sh --tty /dev/pts/1 ${FWD_ARGS[@]}"
             }
         fi
         exit 1
