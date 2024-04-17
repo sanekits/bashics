@@ -34,6 +34,8 @@ set_ps4_plain() {
     PS4='+$?(${BASH_SOURCE}:${LINENO}): ${#FUNCNAME[@]}:${FUNCNAME[0]}()| '
 }
 
+alias quash=quash.sh
+
 stub() {
     # Print debug output to stderr.  Recommended call snippet:
     #   stub "${FUNCNAME[0]}.${LINENO}" "$@" "<Put your message here>"
