@@ -8,6 +8,7 @@ TRACE_HANDLE=9  # Arbitrarily chosen file handle for tracing.
 TRACE_PTY= #  Path to trace pty, e.g. /dev/pts/2
 
 TRACE_CANDIDATE_TTYS=()
+SOURCE_MODE=false #  -s|--source: read commands from stdin, no child process created.
 
 set -o pipefail
 
@@ -62,6 +63,11 @@ LaunchDebugee() {
         echo -e "   Quash is launching: \033[;31m$1\033[;0m"
         echo -e "   Start: \033[;31m$(date -Iseconds)\033[;0m"
         echo -e "   PWD: \033[;31m${PWD}\033[;0m"
+        $SOURCE_MODE && {
+            echo -e "   Source: \033[;31mstdin\033[;0m"
+        } || {
+            echo -e "   Source: \033[;31m<file arg \$0>\033[;0m"
+        }
         echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
         echo -e "   Command line: [\033[;31m" "$@" "\033[;0m]"
         echo
@@ -72,7 +78,11 @@ LaunchDebugee() {
     exec 9> ${TRACE_PTY}
     BASH_XTRACEFD=9
     export BASH_XTRACEFD
-    exec bash -x "$@"
+    if $SOURCE_MODE; then
+        eval "$(cat)"
+    else
+        exec bash -x "$@"
+    fi
 }
 
 
@@ -87,6 +97,8 @@ LaunchDebugee() {
                                 die "--tty $1 -- device not found"
                             }
                         }
+                        ;;
+            --source|-s) SOURCE_MODE=true ;
                         ;;
             -p)         shift;
                         TRACE_PTY="/dev/pts/$1"
@@ -120,9 +132,11 @@ LaunchDebugee() {
         exit 1
     } >&2
 
-    if [[ ${#FWD_ARGS[@]} -eq 0 ]]; then
-        usageDie "No script path provided"
-        exit 2
+    if ! ${SOURCE_MODE}; then
+        [[ ${#FWD_ARGS[@]} -eq 0 ]] && {
+            usageDie "No script path provided"
+            exit 2
+        }
     fi
     LaunchDebugee "${FWD_ARGS[@]}"
 }
