@@ -1,0 +1,8 @@
+# quash-test-1
+echo "Hello from quash-test-1"
+
+printf "Args are:"
+printf "[%s] " "$@"
+printf "\n"
+
+exit 13

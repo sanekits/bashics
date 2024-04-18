@@ -8,7 +8,9 @@ TRACE_HANDLE=9  # Arbitrarily chosen file handle for tracing.
 TRACE_PTY= #  Path to trace pty, e.g. /dev/pts/2
 
 TRACE_CANDIDATE_TTYS=()
-SOURCE_MODE=false #  -s|--source: read commands from stdin, no child process created.
+SOURCE_MODE=false #  -s|--source: read commands in gulp from stdin, no child process created.
+REPL_MODE=false   #  -r|--repl:  read commands one-at-a-time from stdin, eval interactively
+qRCLOAD=false  # --loadrc|-l: read ~/.bashrc before command input (SOURCE or REPL only)
 
 set -o pipefail
 
@@ -19,17 +21,29 @@ die() {
 
 usage() {
     cat <<-EOF
-Quash 0.5.0 -- shell script trace wrapper.
+Quash 0.6.0 -- shell script trace wrapper.
 
 Usage:
-    quash.sh <--tty|-t /path/to/tty> <-p [N]> [--] <script-name> [script args]
+    quash.sh <--tty|-t /path/to/tty> <-p [N]> <-r|--repl> <-s|--source> [--] <script-name> [script args]
+
+Required:
+
+    --tty|-t /path/to-tty:  Send trace output to this terminal/pipe/file
+
+  Or:
+
+    -p:  Output pty short form e.g. '-p 1' is like '--tty /dev/pts/1'
+
+    When run without --tty or -p, we print the tty paths to all found terminals.
 
 Options:
-    --tty|-t /path/to-tty:  Send trace output to this terminal/pipe/file
-    -p:  Output pty short form (e.g. '-p 1' => '--tty /dev/pts/1')
-    --:  End of quash arguments (remaining args are passed to <script-name>)
+    --:  End of quash arguments (remaining args are unparsed, passed to <script-name>)
+    --repl|-r: REPL mode: read and eval one line at a time from stdin
+    --source|-s: SOURCE mode: <script-name> will be sourced without starting child proc.
+    --loadrc|-l: read ~/.bashrc before command input. (REPL or SOURCE mode only)
+    <script-name>: path to script to be executed/evaluated.
+    [script args]: Additional arguments forwarded to script or REPL env.
 
-  When executed without --tty or -p, we print the tty paths to all found terminals.
 EOF
 }
 
@@ -56,6 +70,21 @@ BroadcastTtyIdentifiers() {
     done
 }
 
+_qREPL() {
+    declare -i __quash_lastresult
+    while read __quash_inpline; do
+        eval "set -x; $__quash_inpline"
+        __quash_lastresult=$?; set +x
+    done
+}
+
+_qSOURCE() {
+    declare -i __quash_lastresult
+    set -x; source "$@"
+    __quash_lastresult=$?
+    set +x
+}
+
 LaunchDebugee() {
     echo
     {
@@ -63,11 +92,14 @@ LaunchDebugee() {
         echo -e "   Quash is launching: \033[;31m$1\033[;0m"
         echo -e "   Start: \033[;31m$(date -Iseconds)\033[;0m"
         echo -e "   PWD: \033[;31m${PWD}\033[;0m"
-        $SOURCE_MODE && {
+        if ${SOURCE_MODE}; then
             echo -e "   Source: \033[;31mstdin\033[;0m"
-        } || {
+        elif ${REPL_MODE}; then
+                echo -e "   Source: \033[;31mstdin (REPL)\033[;0m"
+        else
             echo -e "   Source: \033[;31m<file arg \$0>\033[;0m"
-        }
+        fi
+        $qRCLOAD && echo -e '   Load ~/.bashrc:' "\033[;31mYES\033[;0m"
         echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
         echo -e "   Command line: [\033[;31m" "$@" "\033[;0m]"
         echo
@@ -78,8 +110,10 @@ LaunchDebugee() {
     exec 9> ${TRACE_PTY}
     BASH_XTRACEFD=9
     export BASH_XTRACEFD
-    if $SOURCE_MODE; then
-        eval "$(cat)"
+    if ${SOURCE_MODE}; then
+        _qSOURCE "$@"
+    elif ${REPL_MODE}; then
+        _qREPL "$@"
     else
         exec bash -x "$@"
     fi
@@ -98,13 +132,28 @@ LaunchDebugee() {
                             }
                         }
                         ;;
+
+            --help|-h) usage "$@"; exit 1;;
+
             --source|-s) SOURCE_MODE=true ;
                         ;;
+
+            --loadrc|-l) qRCLOAD=true ;
+                        ;;
+
+            --repl|-r) REPL_MODE=true ;
+                        ;;
+
             -p)         shift;
                         TRACE_PTY="/dev/pts/$1"
                         [[ -e "${TRACE_PTY}" ]] || die "-p $1 -- device /dev/pts/$1 not found"
                         ;;
-            --) shift; break ;;
+
+            --)         shift;
+                        FWD_ARGS+=( "$@" );
+                        break
+                        ;;
+
             *) FWD_ARGS+=("$1") ;;
         esac
         shift
@@ -128,11 +177,12 @@ LaunchDebugee() {
             } || {
                 echo "   quash.sh --tty /dev/pts/1 ${FWD_ARGS[@]}"
             }
+            echo "Use --help for options."
         fi
         exit 1
     } >&2
 
-    if ! ${SOURCE_MODE}; then
+    if ! [[ ${SOURCE_MODE} || ${REPL_MODE} ]]; then
         [[ ${#FWD_ARGS[@]} -eq 0 ]] && {
             usageDie "No script path provided"
             exit 2
