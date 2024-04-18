@@ -19,7 +19,7 @@ die() {
     builtin exit 1
 }
 
-usage() {
+_qUsage() {
     cat <<-EOF
 Quash 0.6.0 -- shell script trace wrapper.
 
@@ -48,7 +48,7 @@ EOF
 }
 
 usageDie() {
-    usage
+    _qUsage
     echo
     die "$@"
 }
@@ -72,6 +72,8 @@ BroadcastTtyIdentifiers() {
 
 _qREPL() {
     declare -i __quash_lastresult
+    #echo -n "Call stack: " >&9
+    #echo "${FUNCNAME[*]}" | tr ' ' '\n' | tac | xargs >&9
     while read __quash_inpline; do
         eval "set -x; $__quash_inpline"
         __quash_lastresult=$?; set +x
@@ -105,7 +107,7 @@ LaunchDebugee() {
         echo
     } | sed 's,^, ✨ ✨ ✨,' > ${TRACE_PTY}
 
-    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[;32m ${FUNCNAME[0]}:+${FUNCNAME[0]}() ${#FUNCNAME[@]}:\033[;0m✨ '
+    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[;32m ${FUNCNAME[0]}() ${#FUNCNAME[@]}:\033[;0m✨ '
     export PS4
     exec 9> ${TRACE_PTY}
     BASH_XTRACEFD=9
@@ -133,7 +135,7 @@ LaunchDebugee() {
                         }
                         ;;
 
-            --help|-h) usage "$@"; exit 1;;
+            --help|-h) _qUsage "$@"; exit 1;;
 
             --source|-s) SOURCE_MODE=true ;
                         ;;
