@@ -76,7 +76,6 @@ _qREPL() {
     #echo "${FUNCNAME[*]}" | tr ' ' '\n' | tac | xargs >&9
     set -o vi
     set -o history
-    shopt -s histappend
     shopt -s histverify
     HISTFILE=~/.bash_history
     history -r
@@ -84,7 +83,7 @@ _qREPL() {
     while read -p "Quash>" -e __quash_inpline; do
         eval "set -x; $__quash_inpline"
         __quash_lastresult=$?; set +x
-        #history -s "$__quash_inpline"
+        history -s "$__quash_inpline"
     done
 }
 
