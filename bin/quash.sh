@@ -74,7 +74,9 @@ _qREPL() {
     declare -i __quash_lastresult
     #echo -n "Call stack: " >&9
     #echo "${FUNCNAME[*]}" | tr ' ' '\n' | tac | xargs >&9
-    while read __quash_inpline; do
+    set -o vi
+    set -o history
+    while read -p "Quash>" -e __quash_inpline; do
         eval "set -x; $__quash_inpline"
         __quash_lastresult=$?; set +x
     done
