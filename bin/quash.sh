@@ -21,7 +21,7 @@ die() {
 
 _qUsage() {
     cat <<-EOF
-Quash 0.6.0 -- shell script trace wrapper.
+Quash 0.6.1 -- shell script trace wrapper.
 
 Usage:
     quash.sh <--tty|-t /path/to/tty> <-p [N]> <-r|--repl> <-s|--source> [--] <script-name> [script args]
