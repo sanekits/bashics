@@ -84,7 +84,7 @@ _qREPL() {
     while read -p "Quash>" -e __quash_inpline; do
         eval "set -x; $__quash_inpline"
         __quash_lastresult=$?; set +x
-        history -s "$__quash_inpline"
+        #history -s "$__quash_inpline"
     done
 }
 
