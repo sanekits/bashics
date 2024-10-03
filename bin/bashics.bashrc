@@ -27,11 +27,11 @@ die() {
 }
 
 set_ps4_color() {
-    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[;32m ${#FUNCNAME[@]}:${FUNCNAME[0]}():\033[0m✨ '
+    PS4='\033[0;33m+$?( $( realpath ${BASH_SOURCE} 2>/dev/null || echo unk-source ):${LINENO}  ):\033[0m ${#FUNCNAME[@]}:+${FUNCNAME[0]}()✨'
 }
 
 set_ps4_plain() {
-    PS4='+$?(${BASH_SOURCE}:${LINENO}): ${#FUNCNAME[@]}:${FUNCNAME[0]}()| '
+    PS4='+$?( $( realpath ${BASH_SOURCE} 2>/dev/null || echo unk-source ):${LINENO} ) : ${#FUNCNAME[@]}:${FUNCNAME[0]}()| '
 }
 
 alias quash=quash.sh
