@@ -1,6 +1,58 @@
 #!/bin/bash
 # quash.sh
 
+_qLoadInline() {
+    # Top-level handler for 'inline' mode:
+    # This is used when we're sourced by an instrumented script,
+    # e.g. the author is trying to debug their work by pulling
+    # in _qbreak or _qtrace, etc., such that quash is running
+    # in the same shell as the script-under-test.
+    #
+    #
+    _qINLINE=true
+
+    _qbreak() {
+        #  Caller is a script-under-test. We loop using the UI
+        #  pty as a REPL interface.  User can get a menu
+        #  with '?'
+        [[ -e "$TRACE_PTY" ]] || { true; return; }
+        while true; do
+            {
+            read -p "Quash[$@]! " _qResponse
+
+            case $_qResponse in
+                x|X)  exit 99;;  # Hard exit, no callee handling
+                q|Q)  false; return;; # Return to caller to quit
+                g|G)  true; return;; # Return to caller to continue
+                ?|help|h) echo "menu here";;
+                *)
+                    eval "$_qResponse"
+                    ;;
+            esac
+            } 2>&9 2>&1 <${TRACE_PTY}
+        done
+    }
+}
+
+_qRunUI() {
+    # Our process is the UI: all we have to do is
+    # print our tty and go to sleep.  The script-under-test will
+    # use our terminal I/O
+    echo -e "✨ Quash UI mode ✨, tty=$(tty)"
+    echo "Hit Ctrl+C to quit."
+    sleep infinity
+}
+
+case "$1" in
+    inline) shift; _qLoadInline "$@"; return ; break;;
+    ui) shift; _qRunUI "$@"; return; break;;
+    run) shift; _qRun "$@"; return; break;;
+    here) shift; _qHere "$@"; return; break;;
+    *)
+        echo "ERROR: quash first arg must be one of <run|here|inline|ui>" >&2
+        exit 99
+esac
+
 scriptName="$(readlink -f "$0")"
 scriptDir=$(command dirname -- "${scriptName}")
 
