@@ -29,12 +29,12 @@ die() {
 
 set_ps4_color() {
     #shellcheck disable=2154
-    PS4='\033[0;33m$(exec 2>/dev/null;set +u;bx="${BASH_SOURCE[0]:-_unk_}"; [[ -z "$bx" ]] || realpath -- "$bx" || echo "$bx"):${LINENO} +$? \033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}()| }'
+    PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
 }
 
 set_ps4_plain() {
     #shellcheck disable=2154
-    PS4='$( exec 2>/dev/null; set +u; bx="${BASH_SOURCE[0]:-_unk_}"; [[ -z "$bx" ]] || realpath -- "$bx" || echo "$bx"):${LINENO} +$? ${FUNCNAME[0]:+${FUNCNAME[0]}()| }'
+    PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
 }
 
 alias quash=quash.sh
