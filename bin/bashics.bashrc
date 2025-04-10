@@ -1,3 +1,4 @@
+#!/bin/bash
 # bashics.bashrc - shell init file for bashics sourced from ~/.bashrc
 
 bashics-semaphore() {
@@ -27,11 +28,13 @@ die() {
 }
 
 set_ps4_color() {
-    PS4='\033[0;33m+$?( $( set +u; [[ -z "$BASH_SOURCE" ]] || realpath "${BASH_SOURCE[0]}"):${LINENO} ):\033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}():✨} '
+    #shellcheck disable=2154
+    PS4='\033[0;33m$(exec 2>/dev/null;set +u;bx="${BASH_SOURCE[0]:-_unk_}"; [[ -z "$bx" ]] || realpath -- "$bx" || echo "$bx"):${LINENO} +$? \033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}()| }'
 }
 
 set_ps4_plain() {
-    PS4='+$?( $( set +u; [[ -z "$BASH_SOURCE" ]] || realpath "${BASH_SOURCE[0]}"):${LINENO} ): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    #shellcheck disable=2154
+    PS4='$( exec 2>/dev/null; set +u; bx="${BASH_SOURCE[0]:-_unk_}"; [[ -z "$bx" ]] || realpath -- "$bx" || echo "$bx"):${LINENO} +$? ${FUNCNAME[0]:+${FUNCNAME[0]}()| }'
 }
 
 alias quash=quash.sh
@@ -43,7 +46,7 @@ stub() {
     [[ -n $NoStubs ]] && return
     [[ -n $StubCount ]] || StubCount=1
     {
-        builtin printf "  <<< STUB($StubCount) "
+        builtin printf "  <<< STUB(%s) " "$(StubCount)"
         builtin printf "[%s] " "$@"
         builtin printf " >>> "
         (( StubCount++ ))
@@ -51,11 +54,13 @@ stub() {
 }
 
 # set_bashdebug_mode is a function that's useful for debugging shell commands+script in general:
+#shellcheck disable=1090
 [[ -f ~/.local/bin/bashics/set_bashdebug_mode ]] \
     && source ~/.local/bin/bashics/set_bashdebug_mode
 
 
 # complete_alias is it's own whole thing (https://github.com/sanekits/complete-alias)
+#shellcheck disable=1090
 [[ -f ~/.local/bin/bashics/completion_loader ]] && {
     source ~/.local/bin/bashics/completion_loader
 }
@@ -78,7 +83,7 @@ TERM=xterm-256color
 
 set +o noclobber  # We don't need Mom telling us about overwriting files
 
-[[ -n ${BASH_VERSION[@]} ]] && {
+[[ -n ${BASH_VERSION} ]] && {
     # check the window size after each command and, if necessary,
     # update the values of LINES and COLUMNS.
     shopt -s checkwinsize
@@ -137,10 +142,9 @@ function initLsStuff {
 
 	[[ -n $MACOSX ]] || MACOSX=false
 	if $MACOSX; then   # Mac doesn't have dircolors
-		CLICOLOR=YES
 		alias ls='ls -G'
 	elif which dircolors &>/dev/null; then
-		eval $(dircolors --bourne-shell)
+		eval "$(dircolors --bourne-shell)"
 		alias ls='command ls --color=auto '
         LS_COLORS+=':ow=01;33' # fix horrid unreadable blue-on-green other-writable dirnames
 	fi
@@ -179,12 +183,12 @@ function printv() {
     # array variable(s) back into text streams:
     local __vv __xpr
     for __vv in "$@"; do
-        [[ $( eval declare -p "$__vv" ) =~ ^declare\ -a ]] && {
+        if [[ $( eval declare -p "$__vv" ) =~ ^declare\ -a ]]; then
             __xpr="\${${__vv}[@]}"
             eval 'printf "%s\n" ' "\"$__xpr\""
-        } || {
+        else
             eval echo "\$${__vv}"
-        }
+        fi
     done
 }
 

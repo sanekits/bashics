@@ -2,7 +2,8 @@
 
 # Running bashics-version.sh is the correct way to
 # get the home install path for the tool
-KitVersion=0.8.4
+KitVersion=0.8.7
+readonly KitVersion
 
 canonpath() {
     builtin type -t realpath.sh &>/dev/null && {
@@ -14,7 +15,7 @@ canonpath() {
         return
     }
     # Fallback: Ok for rough work only, does not handle some corner cases:
-    ( builtin cd -L -- "$(command dirname -- $0)"; builtin echo "$(command pwd -P)/$(command basename -- $0)" )
+    ( builtin cd -L -- "$(command dirname -- "$0")" || exit; builtin echo "$(command pwd -P)/$(command basename -- "$0")" )
 }
 
 Script=$(canonpath "$0")
@@ -22,5 +23,5 @@ Scriptdir=$(dirname -- "$Script")
 
 
 if [[ -z "$sourceMe" ]]; then
-    builtin printf "%s\t%s\n" ${Scriptdir} $KitVersion
+    builtin printf "%s\t%s\n" "${Scriptdir}" $KitVersion
 fi
