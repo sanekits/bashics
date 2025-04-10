@@ -13,10 +13,10 @@ die() {
 
 
 [[ -z ${sourceMe} ]] && {
-    which less || {
+    which less &>/dev/null || {
         die "Command 'less' not found on the PATH.  Try '(sudo) apt-get install less' to resolve the dependency."
     }
-    which pygmentize || {
+    which pygmentize &>/dev/null || {
         die "Command 'pygmentize' not found on the PATH.  Try \"$(get_py_version) -m pip install pygments\" to resolve the dependency."
     }
     Less=$(which less)
