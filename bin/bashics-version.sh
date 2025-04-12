@@ -2,7 +2,7 @@
 
 # Running bashics-version.sh is the correct way to
 # get the home install path for the tool
-KitVersion=0.9.2
+KitVersion=0.9.3
 readonly KitVersion
 
 # The shellkit/ tooling naturally evolves out from under the dependent kits.  ShellkitSetupVers allows
