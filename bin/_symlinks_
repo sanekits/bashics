@@ -19,3 +19,4 @@ await-no-locks.sh
 lock-add.sh
 less-syntax-hilite.sh
 quash.sh  # Debug wrapper for shell scripts
+shfmt  # Formatter for shell script
