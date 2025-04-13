@@ -141,6 +141,10 @@ _qMain() {
                     echo "--noexit mode enabled, use 'builtin exit' if you're serious" >&2
                     return
                     ;;
+            --ps1disable) # Turn off PS1 hook functions to reduce noise
+                    unset __pcwrap_run __pcwrap_items PROMPT_COMMAND
+                    return
+                    ;;
 
             --repl|-r) REPL_MODE=true ;
                         ;;
