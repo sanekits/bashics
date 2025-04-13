@@ -22,7 +22,8 @@ function set_bashdebug_mode {
         false
     }
     [[ ${#@} == 0 ]] &&  { print_bad_bxdb $1 ; return; }
-    local Ps4_proto='\033[0;33m+(${BASH_SOURCE}:${LINENO}):\033[0m ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    #shellcheck disable=2154,2016
+    Ps4_proto='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
 
     while [[ ! -z $1 ]]; do
         case $1 in

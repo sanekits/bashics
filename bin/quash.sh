@@ -114,7 +114,8 @@ LaunchDebugee() {
         echo
     } | sed 's,^, ✨ ✨ ✨,' > ${TRACE_PTY}
 
-    PS4='\033[0;33m+$?(${BASH_SOURCE}:${LINENO}):\033[;32m ${FUNCNAME[0]}() ${#FUNCNAME[@]}:\033[;0m✨ '
+    #shellcheck disable=2154
+    PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
     export PS4
     exec 9> ${TRACE_PTY}
     BASH_XTRACEFD=9
