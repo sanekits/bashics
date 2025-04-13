@@ -6,9 +6,7 @@
 _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
 
 quash() {
-    _qSourceMe=1 
     #shellcheck disable=1091
-    source "${HOME}/.local/bin/bashics/quash.sh"
-    _qMain "$@"
+    source "${HOME}/.local/bin/bashics/quash.sh" "$@"
 }
 
