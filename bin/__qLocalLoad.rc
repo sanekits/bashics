@@ -28,7 +28,7 @@ source "${HOME}/.bashrc"
 echo "[[[ ~/.bashrc load completed ]]]" >&2
 
 # Turn off other shell func noise:
-unset __pcwrap_run
+unset __pcwrap_run __pcwrap_items
 # Turn off the usual quash() function:
 unset quash
 # Substitute our own:
