@@ -3,46 +3,26 @@
 
 scriptName="$(readlink -f "$0")"
 
+_QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
+
 TRACE_PTY= #  Path to trace pty, e.g. /dev/pts/2
 
 TRACE_CANDIDATE_TTYS=()
 SOURCE_MODE=false #  -s|--source: read commands in gulp from stdin, no child process created.
 REPL_MODE=false   #  -r|--repl:  read commands one-at-a-time from stdin, eval interactively
 qRCLOAD=false  # --loadrc|-l: read ~/.bashrc before command input (SOURCE or REPL only)
+QNO_EXIT=false # --noexit turns this on
 
 set -o pipefail
 
 die() {
     builtin echo "ERROR($(basename "${scriptName}")): $*" >&2
+    $QNO_EXIT && builtin return 1
     builtin exit 1
 }
 
 _qUsage() {
-    cat <<-EOF
-Quash 0.6.1 -- shell script trace wrapper.
-
-Usage:
-    quash.sh <--tty|-t /path/to/tty> <-p [N]> <-r|--repl> <-s|--source> [--] <script-name> [script args]
-
-Required:
-
-    --tty|-t /path/to-tty:  Send trace output to this terminal/pipe/file
-
-  Or:
-
-    -p:  Output pty short form e.g. '-p 1' is like '--tty /dev/pts/1'
-
-    When run without --tty or -p, we print the tty paths to all found terminals.
-
-Options:
-    --:  End of quash arguments (remaining args are unparsed, passed to <script-name>)
-    --repl|-r: REPL mode: read and eval one line at a time from stdin
-    --source|-s: SOURCE mode: <script-name> will be sourced without starting child proc.
-    --loadrc|-l: read ~/.bashrc before command input. (REPL or SOURCE mode only)
-    <script-name>: path to script to be executed/evaluated.
-    [script args]: Additional arguments forwarded to script or REPL env.
-
-EOF
+    cat "${_QUASH_BIN}/quash.md"
 }
 
 usageDie() {
@@ -111,6 +91,7 @@ LaunchDebugee() {
         fi
         $qRCLOAD && echo -e '   Load ~/.bashrc:' "\033[;31mYES\033[;0m"
         echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
+        echo -e "   _QUASH_BIN: \033[;31m$_QUASH_BIN\033[;0m"
         echo -e "   Command line: [\033[;31m" "$@" "\033[;0m]"
         echo
     } | sed 's,^, ✨ ✨ ✨,' > "${TRACE_PTY}"
@@ -131,8 +112,7 @@ LaunchDebugee() {
     fi
 }
 
-
-[[ -z ${sourceMe} ]] && {
+_qMain() {
     FWD_ARGS=()
     while [[ -n "$1" ]]; do
         case "$1" in
@@ -145,15 +125,40 @@ LaunchDebugee() {
                         }
                         ;;
 
-            --help|-h) _qUsage "$@"; exit 1;;
+            --help|-h) _qUsage "$@"; return;;
 
-            --source|-s) SOURCE_MODE=true ;
-                        ;;
+            --source|-s) SOURCE_MODE=true ; return ;;
 
             --loadrc|-l) qRCLOAD=true ;
                         ;;
 
+            --noexit) # Disable 'exit' to preserve our shell
+                    export QNO_EXIT=true
+                    exit() {
+                        echo "--noexit mode, use 'builtin exit' if you're serious" >&2
+                    }
+                    trap 'echo "--noexit failed, and here we are.  Sorry."' exit
+                    echo "--noexit mode enabled, use 'builtin exit' if you're serious" >&2
+                    return
+                    ;;
+
             --repl|-r) REPL_MODE=true ;
+                        ;;
+
+            --ps4) shift; 
+                        case $1 in
+                            color) 
+                                #shellcheck disable=2154
+                                PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
+                            ;;
+                            plain) 
+                                #shellcheck disable=2154
+                                PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
+                            ;;
+                            off) unset PS4;;
+                            *) echo "Bad --ps4 arg: try color|plain|off" >^&2; false; return ;;
+                        esac
+                        return
                         ;;
 
             -p)         shift;
@@ -191,7 +196,7 @@ LaunchDebugee() {
             fi
             echo "Use --help for options."
         fi
-        exit 1
+        true; return
     } >&2
 
     if ! [[ ${SOURCE_MODE} || ${REPL_MODE} ]]; then
@@ -202,3 +207,6 @@ LaunchDebugee() {
     LaunchDebugee "${FWD_ARGS[@]}"
 }
 
+[[ -z ${_qSourceMe} ]] && {
+    _qMain "$@"
+}

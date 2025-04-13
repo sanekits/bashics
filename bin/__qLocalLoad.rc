@@ -1,0 +1,55 @@
+#!/bin/bash
+# __qLocalLoad.rc
+
+# TEST/DEV wrapper for working with quash in current dir (without install)
+
+# Recommended use:
+#   bash --init-file bin/__qLocalLoad.rc  # Start a new shell with this weird mode
+
+
+export _QUASH_BIN="${PWD}/bin"
+
+# We expect to run in the parent of bin/quash.sh, wherever that might be:
+[[ -f bin/quash.sh ]] || { echo "ERROR: no bin/quash.sh in $PWD" >&2; false; return; }
+
+#  Prevent recursive init:
+[[ -n $_qRecurseLoad ]] && return
+_qRecurseLoad=1  
+
+# We're intentionally sloppy:
+set +ue
+
+# If something in the load goes wrong, shout about it:
+trap 'echo "ERROR: unexpected early exit from __qLocalLoad" >&2' EXIT
+
+echo "[[[ LOADING ~/.bashrc ]]]" >&2
+#shellcheck disable=1091
+source "${HOME}/.bashrc"
+echo "[[[ ~/.bashrc load completed ]]]" >&2
+
+# Turn off other shell func noise:
+unset __pcwrap_run
+# Turn off the usual quash() function:
+unset quash
+# Substitute our own:
+quash() {
+    _qMain "$@"
+}
+
+# Tell quash.sh that there's no subshell hosting it:
+_qSourceMe=1
+
+echo "[[[ LOADING $PWD/bin/quash.sh ]]]" >&2
+#shellcheck disable=2154
+PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
+#shellcheck disable=1091
+source "$PWD/bin/quash.sh"
+# Turn on source mode so quash functions don't kill our shell
+_qMain --source
+
+PS1="@quash> "
+# Reset the trap, we don't need it anymore
+trap - EXIT
+# Done with recursion blocking:
+unset _qRecurseLoad
+echo "[[[ _qLocalLoad succeded]]]" >&2

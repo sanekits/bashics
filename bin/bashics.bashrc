@@ -37,7 +37,8 @@ set_ps4_plain() {
     PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
 }
 
-alias quash=quash.sh
+# shellcheck disable=1091
+source "${HOME}/.local/bin/bashics/quash.bashrc"
 
 stub() {
     # Print debug output to stderr.  Recommended call snippet:
