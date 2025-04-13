@@ -2,9 +2,7 @@
 # quash.sh
 
 scriptName="$(readlink -f "$0")"
-scriptDir=$(command dirname -- "${scriptName}")
 
-TRACE_HANDLE=9  # Arbitrarily chosen file handle for tracing.
 TRACE_PTY= #  Path to trace pty, e.g. /dev/pts/2
 
 TRACE_CANDIDATE_TTYS=()
@@ -15,7 +13,7 @@ qRCLOAD=false  # --loadrc|-l: read ~/.bashrc before command input (SOURCE or REP
 set -o pipefail
 
 die() {
-    builtin echo "ERROR($(basename ${scriptName})): $*" >&2
+    builtin echo "ERROR($(basename "${scriptName}")): $*" >&2
     builtin exit 1
 }
 
@@ -54,9 +52,10 @@ usageDie() {
 }
 
 FindTraceTtyCandidates() {
-    local myTty=$(tty)
+    local myTty; myTty=$(tty)
 
-    TRACE_CANDIDATE_TTYS=( $( ps a | grep bash | grep -E ' [SsR]+\+ ' | awk '{print "/dev/" $2}' | sort -u | grep -v "$myTty" )  )
+    #shellcheck disable=SC2009
+    mapfile -t TRACE_CANDIDATE_TTYS < <( ps a | grep bash | grep -E ' [SsR]+\+ ' | awk '{print "/dev/" $2}' | sort -u | grep -v "$myTty" )  
 }
 
 BroadcastTtyIdentifiers() {
@@ -80,7 +79,7 @@ _qREPL() {
     HISTFILE=~/.bash_history
     history -r
 
-    while read -p "Quash>" -e __quash_inpline; do
+    while read -rp "Quash>" -e __quash_inpline; do
         eval "set -x; $__quash_inpline"
         __quash_lastresult=$?; set +x
         history -s "$__quash_inpline"
@@ -89,7 +88,9 @@ _qREPL() {
 
 _qSOURCE() {
     declare -i __quash_lastresult
-    set -x; source "$@"
+    set -x; 
+    #shellcheck disable=SC1090
+    source "$*"
     __quash_lastresult=$?
     set +x
 }
@@ -112,12 +113,13 @@ LaunchDebugee() {
         echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
         echo -e "   Command line: [\033[;31m" "$@" "\033[;0m]"
         echo
-    } | sed 's,^, ✨ ✨ ✨,' > ${TRACE_PTY}
+    } | sed 's,^, ✨ ✨ ✨,' > "${TRACE_PTY}"
 
-    #shellcheck disable=2154
+    #shellcheck disable=2154,2089
     PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
+    #shellcheck disable=2090
     export PS4
-    exec 9> ${TRACE_PTY}
+    exec 9> "${TRACE_PTY}"
     BASH_XTRACEFD=9
     export BASH_XTRACEFD
     if ${SOURCE_MODE}; then
@@ -182,11 +184,11 @@ LaunchDebugee() {
             echo "Please add \"-t [path]\" or \"-p [N]\" before the name of your script to "
             echo "select the trace output terminal, e.g.:"
             echo
-            [[ ${#FWD_ARGS[@]} -eq 0 ]] && {
+            if [[ ${#FWD_ARGS[@]} -eq 0 ]]; then
                 echo "   quash.sh --tty /dev/pts/1 ./my-script.sh --foo "
-            } || {
-                echo "   quash.sh --tty /dev/pts/1 ${FWD_ARGS[@]}"
-            }
+            else
+                echo "   quash.sh --tty /dev/pts/1 ${FWD_ARGS[*]}"
+            fi
             echo "Use --help for options."
         fi
         exit 1
@@ -195,7 +197,6 @@ LaunchDebugee() {
     if ! [[ ${SOURCE_MODE} || ${REPL_MODE} ]]; then
         [[ ${#FWD_ARGS[@]} -eq 0 ]] && {
             usageDie "No script path provided"
-            exit 2
         }
     fi
     LaunchDebugee "${FWD_ARGS[@]}"
