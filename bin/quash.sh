@@ -117,6 +117,8 @@ _qMain() {
                             ;;
                 --help|-h) shift; _qUsage "$@"; return
                             ;;
+                --clear|-e) shift; printf "\033c" >"${TRACE_PTY}" 
+                            ;;
                 --loadrc|-l) shift; qRCLOAD=true 
                             ;;
                 --completions|-c) shift; 
