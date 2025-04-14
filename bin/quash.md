@@ -1,4 +1,5 @@
 # quash()/quash.sh 
+[Short link](https://bit.ly/3G4n8LH)
 
 `quash.sh` and the *(`quash` shell function)*  is a Bash utility designed to enhance shell debugging and command execution with advanced tracing and terminal management features.
 
