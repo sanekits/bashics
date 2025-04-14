@@ -127,6 +127,7 @@ _qMain() {
                                 0|off|no) bind -r "\t";;
                                 *) echo "Unknown or missing arg to -c: $1" >&2;;
                             esac
+                            shift
                             ;;
                 --noexit) shift;
                             # Disable 'exit' to preserve our shell
