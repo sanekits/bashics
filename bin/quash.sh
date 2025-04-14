@@ -10,14 +10,13 @@
         $QNO_EXIT && builtin return 1
         builtin exit 1
     }
-    __qUsage() {
+    _qUsage() {
         echo "Usage: quash [options] [command]"
         echo "Options:"
         echo "  --tty|-t <path>       Specify trace output terminal (e.g., /dev/pts/2)"
         echo "  -p <N>                Shortcut for --tty /dev/pts/<N>"
         echo "  --notty|-n            Use current terminal for trace output"
         echo "  --findtty|-f          Find available terminals for trace output"
-        echo "  --help|-h             Show this usage message"
         echo "  --loadrc|-l           Load ~/.bashrc before executing command"
         echo "  --clear|-e            Clear the trace output terminal"
         echo "  --completions|-c <on|off> Enable/disable tab completions"
@@ -25,8 +24,9 @@
         echo "  --ps1_disable|-d      Disable PS1 hook functions"
         echo "  --ps4 <color|plain|off> Set PS4 debug prompt style"
         echo "  --                    End of options, pass remaining args as command"
-        echo "Docs: https://github.com/sanekits/bashics/blob/main/bin/quash.md"
+        echo "Docs: https://bit.ly/3G4n8LH"
     }
+
     _qUsageDie() {
         _qUsage
         echo
