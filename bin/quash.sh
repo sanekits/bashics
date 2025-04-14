@@ -68,7 +68,7 @@
         } | sed 's,^, ✨ ✨ ✨,' > "${TRACE_PTY}"
 
         #shellcheck disable=1091
-        [[ -f ${HOME}/.bashrc ]] && source "${HOME}/.bashrc"
+        $qRCLOAD && [[ -f ${HOME}/.bashrc ]] && source "${HOME}/.bashrc"
         #shellcheck disable=2154,2089
         PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
         #shellcheck disable=2090
@@ -104,6 +104,13 @@ _qMain() {
                 --help|-h) shift; _qUsage "$@"; return
                             ;;
                 --loadrc|-l) shift; qRCLOAD=true 
+                            ;;
+                --completions|-c) shift; 
+                            case $1 in
+                                1|on|yes) bind '"\t":complete' ;;
+                                0|off|no) bind -r "\t";;
+                                *) echo "Unknown or missing arg to -c: $1" >&2;;
+                            esac
                             ;;
                 --noexit) shift;
                             # Disable 'exit' to preserve our shell
@@ -147,13 +154,14 @@ _qMain() {
 
     TRACE_PTY=${TRACE_PTY:-} #  Path to trace pty, e.g. /dev/pts/2
 
-    qRCLOAD=false  # --loadrc|-l: read ~/.bashrc before command execution
+    qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
     QNO_EXIT=false # --noexit turns this on
 
     set -o pipefail
     _qArgParse "$@"
 
     if [[ -n "$TRACE_PTY" ]]; then
+        exec 9>&- 
         exec 9> "${TRACE_PTY}"
         BASH_XTRACEFD=9
         export BASH_XTRACEFD

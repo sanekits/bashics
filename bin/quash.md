@@ -1,77 +1,74 @@
-# Quash: Shell Script Trace Wrapper
+# quash.sh Documentation
 
-## Overview
-Quash is a utility script designed to facilitate debugging and tracing of shell scripts. It provides options to send trace output to a specified terminal, run scripts in REPL or source mode, and manage environment configurations.
+`quash.sh` is a Bash utility designed to enhance shell debugging and command execution with advanced tracing and terminal management features.
 
-## Usage 
+## Usage
 
-### In child shell:
+```bash
+quash.sh [options] [command]
 ```
-quash.sh <--tty|-t /path/to/tty> <-p [N]> <-r|--repl> <-s|--source> [--] <script-name> [script args]
-```
-### In current shell:
-```
-quash [options]
-```
-Running in current-shell is useful for interacting with the shell or the elements defined in the script.  *(It also pollutes the current shell with whatever is done there, naturally.)*
-
-`quash` is a thin wrapper defined in `quash.bashrc`, which is loaded with shell init typically.
 
 ## Options
 
-### `--tty|-t /path/to/tty`
-Specifies the terminal, pipe, or file to which trace output will be sent. The path must be valid and writable.
+| Option                  | Description                                                                 |
+|-------------------------|-----------------------------------------------------------------------------|
+| `--tty` \| `-t <path>`  | Specify trace output terminal (e.g., `/dev/pts/2`).                         |
+| `-p <N>`                | Shortcut for `--tty /dev/pts/<N>`.                                          |
+| `--notty` \| `-n`       | Use the current terminal for trace output.                                 |
+| `--findtty` \| `-f`     | Find available terminals for trace output.                                 |
+| `--help` \| `-h`        | Display a brief usage message.                                             |
+| `--loadrc` \| `-l`      | Load `~/.bashrc` before executing the command.                             |
+| `--clear` \| `-e`       | Clear the trace output terminal.                                           |
+| `--completions` \| `-c` | Enable (`on`) or disable (`off`) tab completions.                          |
+| `--noexit`              | Disable `exit` to preserve the shell session.                              |
+| `--ps1_disable` \| `-d` | Disable PS1 hook functions to reduce noise.                                |
+| `--ps4 <style>`         | Set PS4 debug prompt style (`color`, `plain`, or `off`).                   |
+| `--`                    | End of options; pass remaining arguments as the command to execute.        |
 
-### `-p [N]`
-Specifies the short form of the terminal path. For example, `-p 1` is equivalent to `--tty /dev/pts/1`.
+## Features
 
-If neither `--tty` nor `-p` is provided, the current terminal is used.
+### Trace Output Management
+- Redirects trace output to a specified terminal or file.
+- Automatically identifies available terminals for tracing.
 
-### `--query-tty|-1`
-Print the tty paths for each active terminal so they can be easily identified.
+### Command Execution
+- Executes commands with optional loading of `~/.bashrc`.
+- Provides detailed execution context, including timestamps, working directory, and process ID.
 
-### `--`
-Indicates the end of Quash-specific arguments. Any remaining arguments are passed directly to `<script-name>`.
+### Debugging Enhancements
+- Customizable PS4 debug prompt for enhanced trace readability.
+- Supports enabling/disabling tab completions dynamically.
 
-### `--repl|-r`
-Enables REPL (Read-Eval-Print Loop) mode. In this mode, commands are read and evaluated one line at a time from standard input.
-
-### `--source|-s`
-Enables SOURCE mode. In this mode, `<script-name>` is sourced directly into the current shell environment without starting a child shell.
-
-### `--loadrc|-l`
-Loads the `~/.bashrc` file before processing commands. This option is only applicable in REPL or SOURCE mode.
-
-### `<script-name>`
-Specifies the path to the script to be executed or evaluated. This argument is mandatory unless REPL or SOURCE mode is enabled.
-
-### `[script args]`
-Additional arguments to be forwarded to the script or the REPL environment.
+### Shell Preservation
+- `--noexit` mode prevents accidental shell termination, requiring explicit use of `builtin exit`.
 
 ## Examples
 
-### Example 1: Run a script with trace output to a specific terminal
-```
-quash.sh --tty /dev/pts/1 ./my-script.sh --foo
-```
-
-### Example 2: Use REPL mode
-```
-quash.sh --repl
+### Redirect Trace Output to a Specific Terminal
+```bash
+quash.sh --tty /dev/pts/2 -- ls -l
 ```
 
-### Example 3: Source a script with `.bashrc` loaded
-```
-quash.sh --source --loadrc ./my-script.sh
+### Use the Current Terminal for Trace Output
+```bash
+quash.sh --notty -- ps aux
 ```
 
-### Example 4: Display available terminals for trace output
-Run Quash without `--tty` or `-p`:
+### Find Available Terminals for Trace Output
+```bash
+quash.sh --findtty
 ```
-quash.sh
+
+### Execute a Command with `~/.bashrc` Loaded
+```bash
+quash.sh --loadrc -- echo "Hello, world!"
 ```
-This will list available terminals and provide instructions for selecting one.
+
+### Disable PS1 Hooks and Use a Plain PS4 Debug Prompt
+```bash
+quash.sh --ps1_disable --ps4 plain -- bash -x script.sh
+```
 
 ## Notes
 - Ensure the specified terminal or file for trace output is writable.
-- Use `--help` or `-h` for additional guidance.
+- Use `--` to separate `quash.sh` options from the command to execute.
