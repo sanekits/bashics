@@ -1,7 +1,7 @@
 #!/bin/bash
 # quash.sh
 
-
+_QUASH_VERSION=1.0.0
 
 {
     _qDie() {
@@ -19,10 +19,13 @@
         echo "  --findtty|-f          Find available terminals for trace output"
         echo "  --loadrc|-l           Load ~/.bashrc before executing command"
         echo "  --clear|-e            Clear the trace output terminal"
+        echo "  -x                    Wrap command execution with -x;cmd;-x"
+        echo "  -ex                   Wrap command execution with clear;-x;cmd;-x"
         echo "  --completions|-c <on|off> Enable/disable tab completions"
         echo "  --noexit              Disable 'exit' to preserve the shell"
         echo "  --ps1_disable|-d      Disable PS1 hook functions"
         echo "  --ps4 <color|plain|off> Set PS4 debug prompt style"
+        echo "  -v|--version          Print quash version info"
         echo "  --                    End of options, pass remaining args as command"
         echo "Docs: https://bit.ly/3G4n8LH"
     }
@@ -85,8 +88,11 @@
         $qRCLOAD && [[ -f ${HOME}/.bashrc ]] && source "${HOME}/.bashrc"
         #shellcheck disable=2154,2089
         PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
-        #shellcheck disable=2090
+        $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >&"${TRACE_PTY}"
+        if $TRACE_WRAP_COMMAND || $TRACE_WRAP_CLEAR_COMMAND; then set -x; fi
         eval "$*"
+        if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
+
     }
 }
 
@@ -111,6 +117,9 @@ _qMain() {
                             [[ -e "${TRACE_PTY}" ]] || { _qDie "-p $1 -- device /dev/pts/$1 not found"; return ; }
                             shift
                             ;;
+                -x)         shift; # turn on trace debug just before running the command, and back off after.
+                            TRACE_WRAP_COMMAND=true
+                            ;;
                 --notty|-n ) shift; TRACE_PTY=$(tty) 
                             ;;
                 --findtty|-f) shift; _qFindTraceTty; return
@@ -118,6 +127,8 @@ _qMain() {
                 --help|-h) shift; _qUsage "$@"; return
                             ;;
                 --clear|-e) shift; printf "\033c" >"${TRACE_PTY}" 
+                            ;;
+                -ex)        shift; TRACE_WRAP_CLEAR_COMMAND=true
                             ;;
                 --loadrc|-l) shift; qRCLOAD=true 
                             ;;
@@ -158,6 +169,7 @@ _qMain() {
                             esac
                             shift
                             ;;
+                -v|--version) shift; echo "quash.sh version $_QUASH_VERSION"; false; return ;;
                 --)         shift; break ;;
                 *)          break ;;
             esac
@@ -170,12 +182,14 @@ _qMain() {
     _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
 
     TRACE_PTY=${TRACE_PTY:-} #  Path to trace pty, e.g. /dev/pts/2
+    TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
+    TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
 
     qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
     QNO_EXIT=false # --noexit turns this on
 
     set -o pipefail
-    _qArgParse "$@"
+    _qArgParse "$@" || return
 
     if [[ -n "$TRACE_PTY" ]]; then
         exec 9>&- 
