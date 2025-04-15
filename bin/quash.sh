@@ -90,7 +90,11 @@ _QUASH_VERSION=1.0.0
         PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
         $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >&"${TRACE_PTY}"
         if $TRACE_WRAP_COMMAND || $TRACE_WRAP_CLEAR_COMMAND; then set -x; fi
-        eval "$*"
+        if $EVAL_WRAP_SUBSHELL; then
+            ( eval "$*" )
+        else
+            eval "$*"
+        fi
         if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
 
     }
@@ -119,6 +123,8 @@ _qMain() {
                             ;;
                 -x)         shift; # turn on trace debug just before running the command, and back off after.
                             TRACE_WRAP_COMMAND=true
+                            ;;
+                -s|--subshell) shift;  EVAL_WRAP_SUBSHELL=true 
                             ;;
                 --notty|-n ) shift; TRACE_PTY=$(tty) 
                             ;;
@@ -184,12 +190,15 @@ _qMain() {
     TRACE_PTY=${TRACE_PTY:-} #  Path to trace pty, e.g. /dev/pts/2
     TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
     TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
+    EVAL_WRAP_SUBSHELL=false    # -s|--subshell makes the inner eval() call in a subshell (so the command can't force exit, etc.)
 
     qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
     QNO_EXIT=false # --noexit turns this on
 
     set -o pipefail
     _qArgParse "$@" || return
+    #shellcheck disable=2034
+    Ps1Tail="🎲"
 
     if [[ -n "$TRACE_PTY" ]]; then
         exec 9>&- 
