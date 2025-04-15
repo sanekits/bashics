@@ -134,10 +134,10 @@ _qMain() {
                             export QNO_EXIT=true
                             exit() {
                                 #shellcheck disable=2317
-                                echo "--noexit mode, use 'builtin exit' if you're serious" >&2
+                                echo "$?:$*: --noexit mode, use 'builtin exit' if you're serious, 'unset exit to return to normal'" >&2
                             }
-                            trap 'echo "--noexit failed, and here we are.  Sorry."' exit
-                            echo "--noexit mode enabled, use 'builtin exit' if you're serious" >&2
+                            trap 'echo "$?: --noexit failed, and here we are.  Sorry for your loss."; read -rn 1' exit
+                            echo "noexit mode enabled, use 'builtin exit' if you're serious, 'unset exit' to return to normal." >&2
                             ;;
                 --ps1_disable|-d) shift;
                             # Turn off PS1 hook functions to reduce noise

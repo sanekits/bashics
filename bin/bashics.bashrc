@@ -103,6 +103,18 @@ function reset {
     command reset
 }
 
+noexit() {
+    # Disable accidental 'exit' by calling noexit()
+    _ne11="Use 'builtin exit' if you're serious, 'unset exit' to return to normal." >&2
+    exit() {
+        #shellcheck disable=2317
+        echo "$?:$*: noexit mode. ${_ne11}" >&2
+    }
+    trap 'echo "$?: shell exited, so noexit failed you and here we are.  Sorry for your loss."; read -rn 1' exit
+    echo "noexit mode enabled. ${_ne11}" >&2
+}
+
+
 # disable flow control for terminal:
 /bin/stty -ixon -ixoff 2>/dev/null
 
