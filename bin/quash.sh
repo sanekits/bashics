@@ -3,6 +3,7 @@
 
 export _QUASH_VERSION=1.0.0
 export _QUASH_DEPTH=${_QUASH_DEPTH:-1}
+export Ps1Tail="🎲$((_QUASH_DEPTH))"
 
 {
     _qDie() {
@@ -93,12 +94,14 @@ export _QUASH_DEPTH=${_QUASH_DEPTH:-1}
         $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >&"${TRACE_PTY}"
         if $TRACE_WRAP_COMMAND || $TRACE_WRAP_CLEAR_COMMAND; then set -x; fi
         (( _QUASH_DEPTH++ ))
+        export Ps1Tail="🎲$((_QUASH_DEPTH))"
         if $EVAL_WRAP_SUBSHELL; then
             ( eval "$*" )
         else
             eval "$*"
         fi
         (( _QUASH_DEPTH-- ))
+        export Ps1Tail="🎲$((_QUASH_DEPTH))"
         if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
 
     }
@@ -202,7 +205,6 @@ _qMain() {
     set -o pipefail
     _qArgParse "$@" || return
     #shellcheck disable=2034
-    Ps1Tail="🎲"
 
     if [[ -n "$TRACE_PTY" ]]; then
         exec 9>&- 
