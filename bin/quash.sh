@@ -1,7 +1,8 @@
 #!/bin/bash
 # quash.sh
 
-_QUASH_VERSION=1.0.0
+export _QUASH_VERSION=1.0.0
+export _QUASH_DEPTH=${_QUASH_DEPTH:-1}
 
 {
     _qDie() {
@@ -81,6 +82,7 @@ _QUASH_VERSION=1.0.0
             $qRCLOAD && echo -e '   Load ~/.bashrc:' "\033[;31mYES\033[;0m"
             echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
             echo -e "   _QUASH_BIN: \033[;31m$_QUASH_BIN\033[;0m"
+            echo -e "   _QUASH_DEPTH (parent): \033[;31m$_QUASH_DEPTH\033[;0m"
             echo
         } | sed 's,^, ✨ ✨ ✨,' > "${TRACE_PTY}"
 
@@ -90,11 +92,13 @@ _QUASH_VERSION=1.0.0
         PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
         $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >&"${TRACE_PTY}"
         if $TRACE_WRAP_COMMAND || $TRACE_WRAP_CLEAR_COMMAND; then set -x; fi
+        (( _QUASH_DEPTH++ ))
         if $EVAL_WRAP_SUBSHELL; then
             ( eval "$*" )
         else
             eval "$*"
         fi
+        (( _QUASH_DEPTH-- ))
         if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
 
     }
