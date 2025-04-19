@@ -201,6 +201,7 @@ _qMain() {
 
     qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
     QNO_EXIT=false # --noexit turns this on
+    alias q=quash
 
     set -o pipefail
     _qArgParse "$@" || return
