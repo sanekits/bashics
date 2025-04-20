@@ -53,3 +53,7 @@ publish: pre-publish publish-common release-upload release-list
 publish-draft: pre-publish publish-common release-draft-upload release-list
 	cat tmp/draft-url
 	@echo ">>>> publish complete OK. (DRAFT - you must manually publish it from github release page)  <<<"
+
+.docker-lab-postcreate: .footest
+.footest:
+	@ # TODO: add bashics setup or launch menu?  This runs in entrypoint

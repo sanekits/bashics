@@ -5,7 +5,7 @@
 Download and install the self-extracting setup script:
 
 ```
-curl -L https://github.com/sanekits/bashics/releases/download/1.1.1/bashics-setup-1.1.1.sh \
+curl -L https://github.com/sanekits/bashics/releases/download/1.1.2/bashics-setup-1.1.2.sh \
        -o ~/tmp$$.sh && bash ~/tmp$$.sh && rm ~/tmp$$.sh && exec bash
 ```
 
