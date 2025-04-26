@@ -2,7 +2,7 @@
 
 # Running bashics-version.sh is the correct way to
 # get the home install path for the tool
-KitVersion=1.1.2
+KitVersion=1.1.3
 readonly KitVersion
 
 # The shellkit/ tooling naturally evolves out from under the dependent kits.  ShellkitSetupVers allows
@@ -11,7 +11,7 @@ readonly KitVersion
 # Note that within templates/* there may be diverse versions in upstream shellkit, they don't all have to match,
 # but the derived copies should be sync'ed with upstream as needed.
 #shellcheck disable=2034
-ShellkitTemplateVers=2
+ShellkitTemplateVers=3
 
 canonpath() {
     builtin type -t realpath.sh &>/dev/null && {
@@ -26,7 +26,7 @@ canonpath() {
     ( builtin cd -L -- "$(command dirname -- "$0")" || exit; builtin echo "$(command pwd -P)/$(command basename -- "$0")" )
 }
 
-Script=$(canonpath "$0")
+Script="${Script:-"$(canonpath "$0")"}"
 Scriptdir=$(dirname -- "$Script")
 
 

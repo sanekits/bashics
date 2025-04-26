@@ -10,7 +10,7 @@
 # Note that within templates/* there may be diverse versions in upstream shellkit, they don't all have to match,
 # but the derived copies should be sync'ed with upstream as needed.
 #shellcheck disable=2034
-ShellkitTemplateVers=2
+ShellkitTemplateVers=3
 
 canonpath() {
     builtin type -t realpath.sh &>/dev/null && {
@@ -25,11 +25,12 @@ canonpath() {
     ( builtin cd -L -- "$(command dirname -- "$0")" || exit; builtin echo "$(command pwd -P)/$(command basename -- "$0")" )
 }
 
-scriptName="$(canonpath "$0")"
+scriptName="${scriptName:-"$(canonpath "$0")"}"
 scriptDir=$(command dirname -- "${scriptName}")
-script=$(basename $scriptName)
+script="$(basename "$scriptName")"
 
-source ${scriptDir}/set_bashdebug_mode
+#shellcheck disable=1091
+source "${scriptDir}/set_bashdebug_mode"
 
 die() {
     builtin echo "ERROR($(command basename -- "${scriptName}")): $*" >&2
