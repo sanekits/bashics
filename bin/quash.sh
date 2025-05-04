@@ -23,13 +23,13 @@ if ${_QNEW:-false}; then
         _qSourceMe=1 QUASH_PTY=/dev/stderr source ${_QUASH_BIN}/quash.sh 
         bash
     )
-    exit
+    builtin exit
 fi
 
 
 {
     exit() {
-        if (( (_QUASH_TOPLVL-1) <= SHLVL )); then
+        if (( (SHLVL-1) <= _QUASH_TOPLVL )); then
             echo "This is top-level (${SHLVL}). Can't do normal 'exit' here . Try 'builtin exit' if you're serious."
             return 1
         else
@@ -125,13 +125,17 @@ fi
 
 
     _qStatus() {
-        echo -e "   PWD: \033[;31m${PWD}\033[;0m"
-        echo -e "   Our PID: \033[;31m$$\033[;0m"
-        $qRCLOAD && echo -e '   Load ~/.bashrc:' "\033[;31mYES\033[;0m"
-        echo -e "   QTRACE_PTY: \033[;31m${QTRACE_PTY:-/dev/stderr}\033[;0m"
-        echo -e "   _QUASH_BIN: \033[;31m${_QUASH_BIN:-}\033[;0m"
-        echo -e "   SHLVL: \033[;31m$SHLVL\033[;0m"
-        echo -e "   _QUASH_TOPLVL: \033[;31m${_QUASH_TOPLVL:-}\033[;0m"
+        _qSp() {
+            echo -e "   $1: \033[;31m$2\033[;0m"
+        }
+        _qSp PWD "${PWD}"
+        _qSp "Our PID" "$$"
+        _qSp "Load ~/.bashrc" $( $qRCLOAD && echo YES || echo no )
+        _qSp QTRACE_PTY "${QTRACE_PTY:-}"
+        _qSp _QUASH_BIN  "${_QUASH_BIN:-}"
+        _qSp SHLVL $SHLVL
+        _qSp _QUASH_TOPLVL "${_QUASH_TOPLVL:-}"
+        _qSp "-x" "$( [[ $- == *x* ]] && echo YES || echo no )"
     }
     _qLaunchInnerCmd() {
         set +u
@@ -189,7 +193,7 @@ fi
                             ;;
                 --help|-h) shift; _qUsage "$@"; return
                             ;;
-                --clear|-e) shift; printf "\033c" >"${QTRACE_PTY:/dev/stderr}" 
+                --clear|-e) shift; printf "\033c" >"${QTRACE_PTY:-/dev/stderr}" 
                             ;;
                 -ex)        shift; TRACE_WRAP_CLEAR_COMMAND=true
                             ;;
