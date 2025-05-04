@@ -1,24 +1,48 @@
 #!/bin/bash
 # quash.sh
+# To understand quash, you have to consider that quash.bashrc injects a launcher
+# function named 'quash()' which takes one of 2 paths: if we're already in a
+# quashified shell, we will source quash.sh and pass in $@ -- such commands
+# will be quashified without necessarily starting a new shell.  
+#
+# But if the outer quash() call detects a plain shell, it will launch
+# another bash instance and inject quash into it, then the $@ args will
+# be passed to bash in that context.
+#
+# So when reading this code, a key question is "is _QNEW true?"  If so, then
+# we are executing in the outermost quashified shell. 
 
 export _QUASH_VERSION=1.0.2
-export _QUASH_DEPTH=${_QUASH_DEPTH:-$SHLVL}
-if [[ -z ${_QUASH_TOPLVL:-} ]]; then
+#shellcheck disable=2154
+PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
+if ${_QNEW:-false}; then
     # mark the top so we know when we're here
     export _QUASH_TOPLVL=${SHLVL}
-fi
-if (( _QUASH_DEPTH == _QUASH_TOPLVL )); then
-    export Ps1Tail="🎲${_QUASH_DEPTH}"
-else
-    export Ps1Tail="🍅${_QUASH_DEPTH}"
+    unset _QNEW
+    (
+        _qSourceMe=1 QUASH_PTY=/dev/stderr source ${_QUASH_BIN}/quash.sh 
+        bash
+    )
+    exit
 fi
 
+
 {
+    exit() {
+        if (( (_QUASH_TOPLVL-1) <= SHLVL )); then
+            echo "This is top-level (${SHLVL}). Can't do normal 'exit' here . Try 'builtin exit' if you're serious."
+            return 1
+        else
+            builtin exit
+        fi
+    }
     _qDie() {
         # die has special behavior because we allow disabling 'exit'
         builtin echo "ERROR($(basename "${_qScriptName}")): $*" >&2
-        $QNO_EXIT && builtin return 1
-        builtin exit 1
+        exit 1
+    }
+    _qErr() {
+        ( _qDie "$@" )
     }
     _qUsage() {
         echo "Usage: quash [options] [command]"
@@ -38,6 +62,26 @@ fi
         echo "  -v|--version          Print quash version info"
         echo "  --                    End of options, pass remaining args as command"
         echo "Docs: https://bit.ly/3G4n8LH"
+    }
+    parse_ps1_tail() {
+        if (( $SHLVL ==_QUASH_TOPLVL )); then
+            export Ps1Tail="🎲${SHLVL}"
+        else
+            export Ps1Tail="🍅${SHLVL}"
+        fi
+        echo "$Ps1Tail"
+    }
+
+    _qInnerBashrc() {
+        # Invoked as --rcfile for inner bash() replacement
+        cat $HOME/.bashrc
+        echo sourceMe=1
+        cat "${_QUASH_BIN}/quash.sh"
+        unset sourceMe
+        alias q=quash
+    }
+    bash() {
+        command bash --rcfile <(_qInnerBashrc) "$@"
     }
 
     _qUsageDie() {
@@ -80,74 +124,72 @@ fi
     }
 
 
+    _qStatus() {
+        echo -e "   PWD: \033[;31m${PWD}\033[;0m"
+        echo -e "   Our PID: \033[;31m$$\033[;0m"
+        $qRCLOAD && echo -e '   Load ~/.bashrc:' "\033[;31mYES\033[;0m"
+        echo -e "   QTRACE_PTY: \033[;31m${QTRACE_PTY:-/dev/stderr}\033[;0m"
+        echo -e "   _QUASH_BIN: \033[;31m${_QUASH_BIN:-}\033[;0m"
+        echo -e "   SHLVL: \033[;31m$SHLVL\033[;0m"
+        echo -e "   _QUASH_TOPLVL: \033[;31m${_QUASH_TOPLVL:-}\033[;0m"
+    }
     _qLaunchInnerCmd() {
+        set +u
         echo
         {
-            echo
+            _qStatus
             echo -e "   Quash is launching: \033[;31m[$*]\033[;0m"
             echo -e "   Start: \033[;31m$(date -Iseconds)\033[;0m"
-            echo -e "   PWD: \033[;31m${PWD}\033[;0m"
-            echo -e "   Our PID: \033[;31m$$\033[;0m"
-            $qRCLOAD && echo -e '   Load ~/.bashrc:' "\033[;31mYES\033[;0m"
-            echo -e "   Trace output: \033[;31m$TRACE_PTY\033[;0m"
-            echo -e "   _QUASH_BIN: \033[;31m$_QUASH_BIN\033[;0m"
-            echo -e "   _QUASH_DEPTH (parent): \033[;31m$_QUASH_DEPTH\033[;0m"
             echo
-        } | sed 's,^, ✨ ✨ ✨,' > "${TRACE_PTY}"
+        } | sed 's,^, ✨ ✨ ✨,' > "${QTRACE_PTY:-/dev/stderr}"
+        set -u
 
         #shellcheck disable=1091
         $qRCLOAD && [[ -f ${HOME}/.bashrc ]] && source "${HOME}/.bashrc"
         #shellcheck disable=2154,2089
         PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
-        $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >&"${TRACE_PTY}"
+        $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >& ${QTRACE_PTY:-/dev/stderr}
         if $TRACE_WRAP_COMMAND || $TRACE_WRAP_CLEAR_COMMAND; then set -x; fi
-        (( _QUASH_DEPTH++ ))
-        export Ps1Tail="🎲$((_QUASH_DEPTH))"
         if $EVAL_WRAP_SUBSHELL; then
             ( eval "$*" )
         else
             eval "$*"
         fi
-        (( _QUASH_DEPTH-- ))
-        export Ps1Tail="🎲$((_QUASH_DEPTH))"
         if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
 
     }
-}
-
-_qMain() {
     _qArgParse()  {
         while [[ -n "$1" ]]; do
             # Here we'll parse and shift anything that belongs to us.  Remaning 
             # args are interpreted as an inner command
             case "$1" in
+                -s|--status) shift; _qStatus; return ;;
                 --tty|-t)   shift;
-                            TRACE_PTY="$1"
-                            [[ -e "${TRACE_PTY}" ]] || {
-                                touch "${TRACE_PTY}" || {  # The arg might be a file to be created?
-                                    _qDie "--tty $1 -- device not found"
-                                    return
-                                }
-                            }
+                            [[ -e $1 ]] || { _qErr "-tty \"$1\" bad device/filename";  return; }
+                            if [[ "$1" != ${QTRACE_PTY:-} ]]; then
+                                exec 9>&-
+                            fi
+                            QTRACE_PTY="$1"
                             shift
                             ;;
                 -p)         shift; # Shortcut for --tty <path> is to just specify the pts number with -p NN
-                            TRACE_PTY="/dev/pts/$1"
-                            [[ -e "${TRACE_PTY}" ]] || { _qDie "-p $1 -- device /dev/pts/$1 not found"; return ; }
+                            [[ $1 =~ [0-9]+ ]] || { _qErr "-p $1 -- expected a number, try --findtty"; return; }
+                            [[ -e /dev/pts/$1 ]] || { _qErr "-p $1 -- device /dev/pts/$1 not found";  return; }
+                            QTRACE_PTY="/dev/pts/$1"
                             shift
                             ;;
                 -x)         shift; # turn on trace debug just before running the command, and back off after.
                             TRACE_WRAP_COMMAND=true
                             ;;
-                -s|--subshell) shift;  EVAL_WRAP_SUBSHELL=true 
+                -z|--subshell) shift;  EVAL_WRAP_SUBSHELL=true 
                             ;;
-                --notty|-n ) shift; TRACE_PTY=$(tty) 
+                --notty|-n ) shift; QTRACE_PTY=/dev/stderr
                             ;;
                 --findtty|-f) shift; _qFindTraceTty; return
                             ;;
                 --help|-h) shift; _qUsage "$@"; return
                             ;;
-                --clear|-e) shift; printf "\033c" >"${TRACE_PTY}" 
+                --clear|-e) shift; printf "\033c" >"${QTRACE_PTY:/dev/stderr}" 
                             ;;
                 -ex)        shift; TRACE_WRAP_CLEAR_COMMAND=true
                             ;;
@@ -161,19 +203,10 @@ _qMain() {
                             esac
                             shift
                             ;;
-                --noexit) shift;
-                            # Disable 'exit' to preserve our shell
-                            export QNO_EXIT=true
-                            exit() {
-                                #shellcheck disable=2317
-                                echo "$?:$*: --noexit mode, use 'builtin exit' if you're serious, 'unset exit to return to normal'" >&2
-                            }
-                            trap 'echo "$?: --noexit failed, and here we are.  Sorry for your loss."; read -rn 1' exit
-                            echo "noexit mode enabled, use 'builtin exit' if you're serious, 'unset exit' to return to normal." >&2
-                            ;;
                 --ps1_disable|-d) shift;
                             # Turn off PS1 hook functions to reduce noise
                             unset __pcwrap_run __pcwrap_items PROMPT_COMMAND
+                            PROMPT_COMMAND=parse_ps1_tail
                             ;;
                 --ps4)      shift; 
                             case $1 in
@@ -190,45 +223,58 @@ _qMain() {
                             esac
                             shift
                             ;;
-                -v|--version) shift; echo "quash.sh version $_QUASH_VERSION"; false; return ;;
+                -v|--version) shift; 
+                            echo "quash.sh version $_QUASH_VERSION"; false; return ;;
                 --)         shift; break ;;
                 *)          break ;;
             esac
         done
         _qTAIL_ARGS=( "$@" )
     } # end _qArgParse()
+}
 
+_qMain() {
+    _qArgParse "$@"
     _qScriptName="${_qScriptName:-$(readlink -f "$0")}"
 
     export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
 
-    export TRACE_PTY=${TRACE_PTY:-} #  Path to trace pty, e.g. /dev/pts/2
+    export QTRACE_PTY=${QTRACE_PTY:-/dev/stderr} #  Path to trace pty, e.g. /dev/pts/2
     TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
     TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
     EVAL_WRAP_SUBSHELL=false    # -s|--subshell makes the inner eval() call in a subshell (so the command can't force exit, etc.)
 
     qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
-    QNO_EXIT=false # --noexit turns this on
     alias q=quash
 
-    set -o pipefail
-    _qArgParse "$@" || return
+    if [[ ${#_QTAIL_ARGS[@]} == 0 ]] ; then
+        if ${_QNEW:-false}; then
+            _QNEW=false bash
+            return
+        fi
+    fi
     #shellcheck disable=2034
 
-    if [[ -n "$TRACE_PTY" ]]; then
-        exec 9>&- 
-        exec 9> "${TRACE_PTY}"
-        BASH_XTRACEFD=9
-        export BASH_XTRACEFD
-        echo "Trace output assigned to $TRACE_PTY, use -x|+x to control trace output" >"${TRACE_PTY}"
+    set -o pipefail
+    if [[ -n "${QTRACE_PTY:-}" ]]; then
+        local qOldTracePty=$( readlink -f /proc/self/fd/9 2>/dev/null || : )
+        if [[ "${QTRACE_PTY}" != "$qOldTracePty" ]]; then
+            exec 9>&-
+            exec 9> "${QTRACE_PTY}"
+            BASH_XTRACEFD=9
+            echo "Trace output assigned to $QTRACE_PTY, use -x|+x to control trace output" >"${QTRACE_PTY:-/dev/stderr}" 
+        fi
     else
         _qFindTraceTty 
     fi
-    if [[ ${#_qTAIL_ARGS} -gt 0 ]]; then
+    
+    if [[ ${#_qTAIL_ARGS[@]} -gt 0 ]]; then
         _qLaunchInnerCmd "${_qTAIL_ARGS[@]}"
     fi
 }
 
-[[ -z ${_qSourceMe} ]] && {
+_QTAIL_ARGS=()
+
+[[ -z ${_qSourceMe:-} ]] && {
     _qMain "$@"
 }

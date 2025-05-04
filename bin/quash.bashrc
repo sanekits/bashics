@@ -3,12 +3,18 @@
 # Loaded at shell init time usually.  Define the current-shell elements
 # for quash support
 
-_QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
+export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
 
 quash() {
     #shellcheck disable=1091
-    source "${_QUASH_BIN}/quash.sh" "$@"
-    alias q=quash
+    _QNEW=false
+    if [[ -z ${_QUASH_TOPLVL:-} ]]; then
+        (
+            _QNEW=true command bash ${_QUASH_BIN}/quash.sh
+        )
+    else
+        sourceMe=1 source "${_QUASH_BIN}/quash.sh" "$@"
+    fi
 }
 
 
