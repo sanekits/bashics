@@ -54,6 +54,8 @@ fi
         echo "  --findtty|-f          Find available terminals for trace output"
         echo "  --loadrc|-l           Load ~/.bashrc before executing command"
         echo "  --clear|-e            Clear the trace output terminal"
+        echo "  -k '<cmd...>'         Define re-init command"
+        echo "  -r                    Re-execute re-init command"                                     
         echo "  -x                    Wrap command execution with -x;cmd;-x"
         echo "  -ex                   Wrap command execution with clear;-x;cmd;-x"
         echo "  --completions|-c <on|off> Enable/disable tab completions"
@@ -66,7 +68,7 @@ fi
         echo "Docs: https://bit.ly/3G4n8LH"
     }
     parse_ps1_tail() {
-        if (( $SHLVL ==_QUASH_TOPLVL )); then
+        if (( $SHLVL <= (_QUASH_TOPLVL+1) )); then
             export Ps1Tail="🎲${SHLVL}"
         else
             export Ps1Tail="🍅${SHLVL}"
@@ -169,9 +171,10 @@ fi
             # Here we'll parse and shift anything that belongs to us.  Remaning 
             # args are interpreted as an inner command
             case "$1" in
-                -s|--status) shift; _qStatus; return ;;
+                -s|--status) shift; _qStatus; 
+                            return 1 ;;
                 --tty|-t)   shift;
-                            [[ -e $1 ]] || { _qErr "-tty \"$1\" bad device/filename";  return; }
+                            [[ -e $1 ]] || { _qErr "-tty \"$1\" bad device/filename";  return ; }
                             if [[ "$1" != ${QTRACE_PTY:-} ]]; then
                                 exec 9>&-
                             fi
@@ -191,12 +194,21 @@ fi
                             ;;
                 --notty|-n ) shift; QTRACE_PTY=/dev/stderr
                             ;;
-                --findtty|-f) shift; _qFindTraceTty; return
-                            ;;
-                --help|-h) shift; _qUsage "$@"; return
-                            ;;
+                --findtty|-f) shift; _qFindTraceTty; 
+                            return 1;;
+                --help|-h) shift; _qUsage "$@"; 
+                            return 1;;
                 --clear|-e) shift; printf "\033c" >"${QTRACE_PTY:-/dev/stderr}" 
                             ;;
+                -k)         shift; QREINIT_COMMAND="$*" ; 
+                            return 1;;
+                -r)         shift; eval "${QREINIT_COMMAND:-"echo use -k [command] first"}"; 
+                            ( 
+                                xr=$?; 
+                                echo "[$QREINIT_COMMAND]"; 
+                                [[ $xr -eq 0 ]]  && echo "✅" || echo "❌" 
+                            ) ; 
+                            return 1;;
                 -ex)        shift; TRACE_WRAP_CLEAR_COMMAND=true
                             ;;
                 --loadrc|-l) shift; qRCLOAD=true 
@@ -230,7 +242,8 @@ fi
                             shift
                             ;;
                 -v|--version) shift; 
-                            echo "quash.sh version $_QUASH_VERSION"; false; return ;;
+                            echo "quash.sh version $_QUASH_VERSION"; false; 
+                            return 1 ;;
                 --)         shift; break ;;
                 *)          break ;;
             esac
@@ -240,11 +253,11 @@ fi
 }
 
 _qMain() {
-    _qArgParse "$@"
+    _qArgParse "$@" || return 1
     _qScriptName="${_qScriptName:-$(readlink -f "$0")}"
 
     export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
-
+    export QREINIT_COMMAND=${QREINIT_COMMAND:-}  # -k to set, -r to re-execute
     export QTRACE_PTY=${QTRACE_PTY:-/dev/stderr} #  Path to trace pty, e.g. /dev/pts/2
     TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
     TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
