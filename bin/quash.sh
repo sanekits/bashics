@@ -1,9 +1,17 @@
 #!/bin/bash
 # quash.sh
 
-export _QUASH_VERSION=1.0.0
-export _QUASH_DEPTH=${_QUASH_DEPTH:-1}
-export Ps1Tail="🎲$((_QUASH_DEPTH))"
+export _QUASH_VERSION=1.0.2
+export _QUASH_DEPTH=${_QUASH_DEPTH:-$SHLVL}
+if [[ -z ${_QUASH_TOPLVL:-} ]]; then
+    # mark the top so we know when we're here
+    export _QUASH_TOPLVL=${SHLVL}
+fi
+if (( _QUASH_DEPTH == _QUASH_TOPLVL )); then
+    export Ps1Tail="🎲${_QUASH_DEPTH}"
+else
+    export Ps1Tail="🍅${_QUASH_DEPTH}"
+fi
 
 {
     _qDie() {
@@ -192,9 +200,9 @@ _qMain() {
 
     _qScriptName="${_qScriptName:-$(readlink -f "$0")}"
 
-    _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
+    export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
 
-    TRACE_PTY=${TRACE_PTY:-} #  Path to trace pty, e.g. /dev/pts/2
+    export TRACE_PTY=${TRACE_PTY:-} #  Path to trace pty, e.g. /dev/pts/2
     TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
     TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
     EVAL_WRAP_SUBSHELL=false    # -s|--subshell makes the inner eval() call in a subshell (so the command can't force exit, etc.)
