@@ -132,6 +132,7 @@ fi
         _qSp() {
             echo -e "   $1: \033[;31m$2\033[;0m"
         }
+        _qSp "Re-init command" "$QREINIT_COMMAND"
         _qSp PWD "${PWD}"
         _qSp "Our PID" "$$"
         _qSp "Load ~/.bashrc" $( $qRCLOAD && echo YES || echo no )
