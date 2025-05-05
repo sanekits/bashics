@@ -15,12 +15,38 @@ die() {
 main() {
     set -ue
     set -x
-    (
-        cd "${HOME}/.local/bin"
-        [[ -h ./bashics ]] && die "bashics is already fake-installed: $(command ls -ald ./bashics)"
-        [[ -d ./bashics ]] && mv ./bashics ./bashics-bak.$$
-        ln -sf "${scriptDir}" ./bashics
-    )
+    local mode="${1:install}"
+    case $mode in 
+        install)
+            (
+                cd "${HOME}/.local/bin"
+                [[ -h ./bashics ]] && die "bashics is already fake-installed: $(command ls -ald ./bashics)"
+                [[ -d ./bashics ]] && {
+                    mv ./bashics ./bashics-bak.$$
+                    rm ./bashics-bak.latest &>/dev/null || :
+                    ln -sf ./bashics-bak.$$ ./bashics-bak.latest
+                    ln -sf "${scriptDir}" ./bashics
+                    echo "install complete"
+                }
+                return
+            )
+            ;;
+        uninstall)
+            (
+                cd "${HOME}/.local/bin"
+                [[ -h ./bashics ]] || die "bashics is not fake-installed: $(command ls -ald ./bashics)"
+                rm bashics
+                xlatest=$(readlink -f ./bashics-bak.latest)
+                [[ -d $xlatest ]] || die "Incoherent bashics-bak.latest"
+                mv "$xlatest" bashics
+                rm bashics-bak.latest
+                echo "uninstall complete"
+            )
+            ;;
+        *)
+            die bad mode "$mode"
+            ;;
+    esac
 }
 
 if [[ -z "${sourceMe:-}" ]]; then
