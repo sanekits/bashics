@@ -74,7 +74,7 @@ PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_
         fi
     }
     parse_ps1_tail() {
-        if (( SHLVL <= (_QUASH_TOPLVL+1) )); then
+        if (( SHLVL <= _QUASH_TOPLVL )); then
             export Ps1Tail="🎲${SHLVL}"
         else
             export Ps1Tail="🍅${SHLVL}"
