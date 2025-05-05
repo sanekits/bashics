@@ -13,9 +13,10 @@ quash() {
             #shellcheck disable=2317
     else
         #shellcheck disable=1091
-        _qSourceMe=1 source "${_QUASH_BIN}/quash.sh" "$@"
+        source "${_QUASH_BIN}/quash.sh" "$@"
     fi
     unset _QNEW
+    alias q=quash
 }
 
 

@@ -21,8 +21,8 @@ PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_
 
 {
     exit() {
-        if (( (SHLVL-1) <= _QUASH_TOPLVL )); then
-            if [[ $1 == -q ]]; then
+        if (( SHLVL <= ${_QUASH_TOPLVL:-0} )); then
+            if [[ ${1:-} == -q ]]; then
                 builtin exit 1
             fi
             echo "This is top-level (${SHLVL}). Can't do normal 'exit' here . Try 'builtin exit' if you're serious."
@@ -84,11 +84,12 @@ PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_
 
     _qInnerBashrc() {
         # Invoked as --rcfile for inner bash() replacement
-        cat "$HOME/.bashrc"
-        echo _qSsourceMe=1
-        cat "${_QUASH_BIN}/quash.sh"
-        unset _qSourceMe
-        alias q=quash
+        cut -c 13- <<-"EOF"
+            source "$HOME/.bashrc"
+            export _QUASH_BIN=${_QUASH_BIN:-$HOME/.local/bin/bashics}
+            source ${_QUASH_BIN}/quash.bashrc
+            alias q=quash
+EOF
     }
     bash() {
         command bash --rcfile <(_qInnerBashrc) "$@"
@@ -266,13 +267,12 @@ _qMain() {
     export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
     export QREINIT_COMMAND=${QREINIT_COMMAND:-}  # -k to set, -r to re-execute
     export QTRACE_PTY=${QTRACE_PTY:-/dev/stderr} #  Path to trace pty, e.g. /dev/pts/2
-    export qOldTracePty=${qOldTracePty:$QTRACE_PTY} # For change detection
+    export qOldTracePty=${qOldTracePty:-$QTRACE_PTY} # For change detection
     TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
     TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
     EVAL_WRAP_SUBSHELL=false    # -s|--subshell makes the inner eval() call in a subshell (so the command can't force exit, etc.)
 
     qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
-    alias q=quash
 
     set -o pipefail
     
@@ -298,6 +298,7 @@ if ${_QNEW:-false}; then
     # than forcing a subshell: this allows debugging the state
     # of the current shell.  
     qsync_trace_pty
+    _qMain
     return
 fi
 
