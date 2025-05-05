@@ -12,17 +12,32 @@
 # So when reading this code, a key question is "is _QNEW true?"  If so, then
 # we are executing in the outermost quashified shell. 
 
-export _QUASH_VERSION=1.0.2
+export _QUASH_VERSION=1.0.4
 #shellcheck disable=2154
 PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
+
+qsync_trace_pty() {
+    QTRACE_PTY=${QTRACE_PTY:-/dev/stderr}
+    if [[ "${QTRACE_PTY}" != "$qOldTracePty" ]]; then
+        local qOldTracePty=${QTRACE_PTY:-/dev/stderr}
+        echo "Trace output switching to $QTRACE_PTY, use -x|+x to control trace output" >"${QTRACE_PTY}" 
+        exec 9>&-
+        exec 9> "${QTRACE_PTY}"
+        BASH_XTRACEFD=9
+    fi
+}
+
 if ${_QNEW:-false}; then
     # mark the top so we know when we're here
     export _QUASH_TOPLVL=${SHLVL}
+    #   LL0
     unset _QNEW
-    (
-        _qSourceMe=1 QUASH_PTY=/dev/stderr source ${_QUASH_BIN}/quash.sh 
-        bash
-    )
+    __cleanup_quash() {
+        echo '#__cleanup_quash invoked' 2>/dev/null; 
+    }
+    trap '__cleanup_quash; trap - EXIT RETURN;' EXIT RETURN 
+    qsync_trace_pty
+    local _xscript;xscript="$( _qSourceMe="" source "${_QUASH_BIN}/quash.sh" --script)"
     builtin exit
 fi
 
@@ -30,6 +45,9 @@ fi
 {
     exit() {
         if (( (SHLVL-1) <= _QUASH_TOPLVL )); then
+            if [[ $1 == -q ]]; then
+                builtin exit 1
+            fi
             echo "This is top-level (${SHLVL}). Can't do normal 'exit' here . Try 'builtin exit' if you're serious."
             return 1
         else
@@ -78,10 +96,10 @@ fi
 
     _qInnerBashrc() {
         # Invoked as --rcfile for inner bash() replacement
-        cat $HOME/.bashrc
-        echo sourceMe=1
+        cat "$HOME/.bashrc"
+        echo _qSsourceMe=1
         cat "${_QUASH_BIN}/quash.sh"
-        unset sourceMe
+        unset _qSourceMe
         alias q=quash
     }
     bash() {
@@ -165,7 +183,20 @@ fi
             eval "$*"
         fi
         if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
+    }
 
+    _qScriptEmit() {
+        # When --init is passed to _qArgParse, the caller is asking us to
+        # emit shell script (i.e. to modify their current shell)
+        echo "_qScriptEmit called [$*]" >&2
+        local xcmd="$1"; shift
+        [[ -n "$xcmd" ]] || return
+        case $xcmd in
+            new)
+                echo 'echo _qScriptInit would do something interesting here' >&2
+            ;;
+            *)
+        esac
     }
     _qArgParse()  {
         while [[ -n "$1" ]]; do
@@ -245,6 +276,8 @@ fi
                 -v|--version) shift; 
                             echo "quash.sh version $_QUASH_VERSION"; false; 
                             return 1 ;;
+                --script)   shift; _qScriptEmit "$@"; 
+                            return;;
                 --)         shift; break ;;
                 *)          break ;;
             esac
@@ -260,6 +293,7 @@ _qMain() {
     export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
     export QREINIT_COMMAND=${QREINIT_COMMAND:-}  # -k to set, -r to re-execute
     export QTRACE_PTY=${QTRACE_PTY:-/dev/stderr} #  Path to trace pty, e.g. /dev/pts/2
+    export qOldTracePty=${qOldTracePty:$QTRACE_PTY} # For change detection
     TRACE_WRAP_COMMAND=false  # --clear|-x means "wrap the command execution with -x; command ;+x
     TRACE_WRAP_CLEAR_COMMAND=false # -ex means "wrap the command execution with "clear screen;-x;command;+x
     EVAL_WRAP_SUBSHELL=false    # -s|--subshell makes the inner eval() call in a subshell (so the command can't force exit, etc.)
@@ -267,26 +301,7 @@ _qMain() {
     qRCLOAD=${qRCLOAD:-false}  # --loadrc|-l: read ~/.bashrc before command execution
     alias q=quash
 
-    if [[ ${#_QTAIL_ARGS[@]} == 0 ]] ; then
-        if ${_QNEW:-false}; then
-            _QNEW=false bash
-            return
-        fi
-    fi
-    #shellcheck disable=2034
-
     set -o pipefail
-    if [[ -n "${QTRACE_PTY:-}" ]]; then
-        local qOldTracePty=$( readlink -f /proc/self/fd/9 2>/dev/null || : )
-        if [[ "${QTRACE_PTY}" != "$qOldTracePty" ]]; then
-            exec 9>&-
-            exec 9> "${QTRACE_PTY}"
-            BASH_XTRACEFD=9
-            echo "Trace output assigned to $QTRACE_PTY, use -x|+x to control trace output" >"${QTRACE_PTY:-/dev/stderr}" 
-        fi
-    else
-        _qFindTraceTty 
-    fi
     
     if [[ ${#_qTAIL_ARGS[@]} -gt 0 ]]; then
         _qLaunchInnerCmd "${_qTAIL_ARGS[@]}"

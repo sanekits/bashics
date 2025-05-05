@@ -38,7 +38,7 @@ set_ps4_plain() {
 }
 
 # shellcheck disable=1091
-source "${HOME}/.local/bin/bashics/quash.bashrc"
+_qSourceMe=1 source "${HOME}/.local/bin/bashics/quash.bashrc"
 
 stub() {
     # Print debug output to stderr.  Recommended call snippet:

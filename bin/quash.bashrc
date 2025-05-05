@@ -9,11 +9,10 @@ quash() {
     #shellcheck disable=1091
     _QNEW=false
     if [[ -z ${_QUASH_TOPLVL:-} ]]; then
-        (
-            _QNEW=true command bash ${_QUASH_BIN}/quash.sh
-        )
+            _qSourceMe=1 _QNEW=true source ${_QUASH_BIN}/quash.sh
+            return
     else
-        sourceMe=1 source "${_QUASH_BIN}/quash.sh" "$@"
+        _qSourceMe=1 source "${_QUASH_BIN}/quash.sh" "$@"
     fi
 }
 
