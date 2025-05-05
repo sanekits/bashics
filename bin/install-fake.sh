@@ -1,6 +1,5 @@
 #!/bin/bash
-# install-fake.sh
-#shellcheck disable=2154
+# install-fake.s#shellcheck disable=2154
 PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
 
 scriptName="${scriptName:-"$(command readlink -f -- "$0")"}"
@@ -14,20 +13,20 @@ die() {
 
 main() {
     set -ue
-    set -x
-    local mode="${1:install}"
+    local mode="${1:-install}"
     case $mode in 
         install)
             (
+                mkdir -p "${HOME}/.local/bin"
                 cd "${HOME}/.local/bin"
                 [[ -h ./bashics ]] && die "bashics is already fake-installed: $(command ls -ald ./bashics)"
                 [[ -d ./bashics ]] && {
                     mv ./bashics ./bashics-bak.$$
                     rm ./bashics-bak.latest &>/dev/null || :
                     ln -sf ./bashics-bak.$$ ./bashics-bak.latest
-                    ln -sf "${scriptDir}" ./bashics
-                    echo "install complete"
                 }
+                ln -sf "${scriptDir}" ./bashics
+                echo "install complete"
                 return
             )
             ;;

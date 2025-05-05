@@ -16,30 +16,7 @@ export _QUASH_VERSION=1.0.4
 #shellcheck disable=2154
 PS4='$( _0=$?; exec 2>/dev/null; realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} ^$_0 ${FUNCNAME[0]:-?}()=>" ) '
 
-qsync_trace_pty() {
-    QTRACE_PTY=${QTRACE_PTY:-/dev/stderr}
-    if [[ "${QTRACE_PTY}" != "$qOldTracePty" ]]; then
-        local qOldTracePty=${QTRACE_PTY:-/dev/stderr}
-        echo "Trace output switching to $QTRACE_PTY, use -x|+x to control trace output" >"${QTRACE_PTY}" 
-        exec 9>&-
-        exec 9> "${QTRACE_PTY}"
-        BASH_XTRACEFD=9
-    fi
-}
 
-if ${_QNEW:-false}; then
-    # mark the top so we know when we're here
-    export _QUASH_TOPLVL=${SHLVL}
-    #   LL0
-    unset _QNEW
-    __cleanup_quash() {
-        echo '#__cleanup_quash invoked' 2>/dev/null; 
-    }
-    trap '__cleanup_quash; trap - EXIT RETURN;' EXIT RETURN 
-    qsync_trace_pty
-    local _xscript;xscript="$( _qSourceMe="" source "${_QUASH_BIN}/quash.sh" --script)"
-    builtin exit
-fi
 
 
 {
@@ -85,8 +62,19 @@ fi
         echo "  --                    End of options, pass remaining args as command"
         echo "Docs: https://bit.ly/3G4n8LH"
     }
+    qsync_trace_pty() {
+        # Detect changes to QTRACE_PTY and apply them by fiddling the trace destination.
+        QTRACE_PTY=${QTRACE_PTY:-/dev/stderr}
+        if [[ "${QTRACE_PTY}" != "$qOldTracePty" ]]; then
+            qOldTracePty=${QTRACE_PTY:-/dev/stderr}
+            echo "Trace output switching to $QTRACE_PTY, use -x|+x to control trace output" >"${QTRACE_PTY}" 
+            exec 9>&-
+            exec 9> "${QTRACE_PTY}"
+            BASH_XTRACEFD=9
+        fi
+    }
     parse_ps1_tail() {
-        if (( $SHLVL <= (_QUASH_TOPLVL+1) )); then
+        if (( SHLVL <= (_QUASH_TOPLVL+1) )); then
             export Ps1Tail="🎲${SHLVL}"
         else
             export Ps1Tail="🍅${SHLVL}"
@@ -153,7 +141,7 @@ fi
         _qSp "Re-init command" "$QREINIT_COMMAND"
         _qSp PWD "${PWD}"
         _qSp "Our PID" "$$"
-        _qSp "Load ~/.bashrc" $( $qRCLOAD && echo YES || echo no )
+        _qSp "Load ~/.bashrc" "$( $qRCLOAD && echo YES || echo no )"
         _qSp QTRACE_PTY "${QTRACE_PTY:-}"
         _qSp _QUASH_BIN  "${_QUASH_BIN:-}"
         _qSp SHLVL $SHLVL
@@ -175,7 +163,7 @@ fi
         $qRCLOAD && [[ -f ${HOME}/.bashrc ]] && source "${HOME}/.bashrc"
         #shellcheck disable=2154,2089
         PS4='\033[0;33m$( _0=$?;set +e;exec 2>/dev/null;realpath -- "${BASH_SOURCE[0]:-?}:${LINENO} \033[0;35m^$_0\033[32m ${FUNCNAME[0]:-?}()=>" )\033[;0m '
-        $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >& ${QTRACE_PTY:-/dev/stderr}
+        $TRACE_WRAP_CLEAR_COMMAND && printf "\033c" >& "${QTRACE_PTY:-/dev/stderr}"
         if $TRACE_WRAP_COMMAND || $TRACE_WRAP_CLEAR_COMMAND; then set -x; fi
         if $EVAL_WRAP_SUBSHELL; then
             ( eval "$*" )
@@ -185,19 +173,6 @@ fi
         if $TRACE_WRAP_CLEAR_COMMAND ||$TRACE_WRAP_COMMAND; then set +x; fi
     }
 
-    _qScriptEmit() {
-        # When --init is passed to _qArgParse, the caller is asking us to
-        # emit shell script (i.e. to modify their current shell)
-        echo "_qScriptEmit called [$*]" >&2
-        local xcmd="$1"; shift
-        [[ -n "$xcmd" ]] || return
-        case $xcmd in
-            new)
-                echo 'echo _qScriptInit would do something interesting here' >&2
-            ;;
-            *)
-        esac
-    }
     _qArgParse()  {
         while [[ -n "$1" ]]; do
             # Here we'll parse and shift anything that belongs to us.  Remaning 
@@ -207,7 +182,7 @@ fi
                             return 1 ;;
                 --tty|-t)   shift;
                             [[ -e $1 ]] || { _qErr "-tty \"$1\" bad device/filename";  return ; }
-                            if [[ "$1" != ${QTRACE_PTY:-} ]]; then
+                            if [[ "$1" != "${QTRACE_PTY:-}" ]]; then
                                 exec 9>&-
                             fi
                             QTRACE_PTY="$1"
@@ -276,8 +251,6 @@ fi
                 -v|--version) shift; 
                             echo "quash.sh version $_QUASH_VERSION"; false; 
                             return 1 ;;
-                --script)   shift; _qScriptEmit "$@"; 
-                            return;;
                 --)         shift; break ;;
                 *)          break ;;
             esac
@@ -309,6 +282,24 @@ _qMain() {
 }
 
 _QTAIL_ARGS=()
+
+if ${_QNEW:-false}; then
+    # mark the top so we know when we're here
+    export _QUASH_TOPLVL=${SHLVL}
+    #   LL0
+    unset _QNEW
+    # __cleanup_quash() {
+    #     echo "#__cleanup_quash invoked" 2>/dev/null
+    # }
+    # fi
+    # trap '__cleanup_quash; trap - EXIT RETURN;' EXIT RETURN 
+    
+    # We want to allow the user to quashify their current shell, rather
+    # than forcing a subshell: this allows debugging the state
+    # of the current shell.  
+    qsync_trace_pty
+    return
+fi
 
 [[ -z ${_qSourceMe:-} ]] && {
     _qMain "$@"

@@ -6,14 +6,16 @@
 export _QUASH_BIN=${_QUASH_BIN:-"${HOME}/.local/bin/bashics"}
 
 quash() {
-    #shellcheck disable=1091
     _QNEW=false
     if [[ -z ${_QUASH_TOPLVL:-} ]]; then
-            _qSourceMe=1 _QNEW=true source ${_QUASH_BIN}/quash.sh
-            return
+            #shellcheck disable=1091,2317
+            _qSourceMe=1 _QNEW=true source "${_QUASH_BIN}/quash.sh"
+            #shellcheck disable=2317
     else
+        #shellcheck disable=1091
         _qSourceMe=1 source "${_QUASH_BIN}/quash.sh" "$@"
     fi
+    unset _QNEW
 }
 
 
